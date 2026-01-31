@@ -1,0 +1,14 @@
+[package]
+name = "ospab-os"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "ospab-os"
+path = "src/main.rs"
+
+[dependencies]
+spin = "0.9"
+volatile = "0.2"
+x86_64 = "0.14"
+uart_16550 = "0.2"

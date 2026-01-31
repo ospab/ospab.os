@@ -1,0 +1,13 @@
+D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-unknown-none\debug\deps\tomato_pm-e7b178d21b73ec42.d: src\lib.rs src\core\mod.rs src\core\solver.rs src\storage\mod.rs src\storage\disk_io.rs src\api\mod.rs src\api\cli.rs src\parser\mod.rs src\parser\toml.rs
+
+D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-unknown-none\debug\deps\libtomato_pm-e7b178d21b73ec42.rmeta: src\lib.rs src\core\mod.rs src\core\solver.rs src\storage\mod.rs src\storage\disk_io.rs src\api\mod.rs src\api\cli.rs src\parser\mod.rs src\parser\toml.rs
+
+src\lib.rs:
+src\core\mod.rs:
+src\core\solver.rs:
+src\storage\mod.rs:
+src\storage\disk_io.rs:
+src\api\mod.rs:
+src\api\cli.rs:
+src\parser\mod.rs:
+src\parser\toml.rs:
