@@ -34,11 +34,13 @@ impl PhysicalAllocator {
                         if (byte & (1 << bit)) == 0 {
                             let page_index = i * 8 + bit;
                             Self::mark_used(page_index);
+                            crate::println!("Allocated page at index: {}", page_index);
                             return Some(page_index * PAGE_SIZE);
                         }
                     }
                 }
             }
+            crate::println!("Failed to allocate page: no free pages available");
             None
         }
     }
@@ -47,6 +49,7 @@ impl PhysicalAllocator {
         let page_index = addr / PAGE_SIZE;
         unsafe {
             Self::mark_free(page_index);
+            crate::println!("Freed page at index: {}", page_index);
         }
     }
 

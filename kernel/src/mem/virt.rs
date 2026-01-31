@@ -46,19 +46,35 @@ impl VirtualMemoryManager {
     }
 
     pub fn map_page(&mut self, virt_addr: usize, phys_addr: usize, flags: u64) {
-        // Intentionally no-op: the bootloader/boot environment is responsible
-        // for initial mappings. Avoid creating or modifying page tables here
-        // to prevent double-mapping (PageAlreadyMapped) panics.
-        let _ = (virt_addr, phys_addr, flags);
-    }
+        if self.pml4.is_null() {
+            return; // No-op if page table is not initialized
+        }
 
-    pub fn unmap_page(&mut self, virt_addr: usize) {
-        // No-op when leaving mapping to the bootloader.
-        let _ = virt_addr;
-    }
+        let pml4_index = (virt_addr >> 39) & 0x1FF;
+        let pdpt_index = (virt_addr >> 30) & 0x1FF;
+        let pd_index = (virt_addr >> 21) & 0x1FF;
+        let pt_index = (virt_addr >> 12) & 0x1FF;
 
-    pub fn load_cr3(&self) {
-        // Do not load our own CR3; bootloader already set up correct page tables.
+        unsafe {
+            let pdpt = self.get_or_create_table(pml4_index);
+            let pd = self.get_or_create_table_from_table(pdpt, pdpt_index);
+            let pt = self.get_or_create_table_from_table(pd, pd_index);
+
+            let entry = (*pt).get_entry(pt_index);
+            if (entry & PAGE_PRESENT) != 0 {
+                let current_phys_addr = entry & !0xFFF;
+                if current_phys_addr == (phys_addr as u64) {
+                    // Page already mapped to the same address, update flags
+                    (*pt).set_entry(pt_index, phys_addr as u64, flags);
+                } else {
+                    // Page already mapped to a different address, update mapping
+                    (*pt).set_entry(pt_index, phys_addr as u64, flags);
+                }
+            } else {
+                // Map the page
+                (*pt).set_entry(pt_index, phys_addr as u64, flags);
+            }
+        }
     }
 
     fn get_or_create_table(&mut self, index: usize) -> *mut PageTable {
@@ -71,7 +87,7 @@ impl VirtualMemoryManager {
                     (*self.pml4).set_entry(index, addr as u64, PAGE_PRESENT | PAGE_WRITABLE);
                     addr as *mut PageTable
                 } else {
-                    panic!("Failed to allocate page table");
+                    core::ptr::null_mut() // Return null pointer on allocation failure
                 }
             } else {
                 (entry & !0xFFF) as *mut PageTable

@@ -1,6 +1,9 @@
 // Hardware abstraction layers
 // VGA driver
 
+pub mod vga_buffer;
+pub mod keyboard;
+
 const VGA_BUFFER: *mut u16 = 0xB8000 as *mut u16;
 const VGA_WIDTH: usize = 80;
 const VGA_HEIGHT: usize = 25;
