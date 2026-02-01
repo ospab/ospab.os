@@ -63,11 +63,6 @@ pub fn queue_scancode(scancode: u8) {
 
 /// Called from main loop - process queued scancodes
 pub fn process_scancodes() {
-    // Safety: only process if framebuffer initialized
-    if !framebuffer::is_initialized() {
-        return;
-    }
-    
     unsafe {
         // Process up to 16 scancodes per call to avoid blocking too long
         let mut count = 0;
@@ -107,11 +102,6 @@ pub fn handle_scancode(scancode: u8) {
 }
 
 fn handle_char(c: char) {
-    // Safety check: don't process if framebuffer not ready
-    if !framebuffer::is_initialized() {
-        return;
-    }
-    
     unsafe {
         match c {
             '\n' | '\r' => {
@@ -140,11 +130,6 @@ fn handle_char(c: char) {
 }
 
 fn execute_command() {
-    // Safety check: don't execute if framebuffer not ready
-    if !framebuffer::is_initialized() {
-        return;
-    }
-    
     unsafe {
         let cmd_bytes = &STATE.cmd_buf[..STATE.cmd_len];
         let cmd = match core::str::from_utf8(cmd_bytes) {

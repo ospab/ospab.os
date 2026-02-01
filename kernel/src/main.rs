@@ -154,13 +154,12 @@ pub extern "C" fn _start() -> ! {
     }
 
     // Initialize keyboard driver
-    // DISABLED: Causes triple fault in VMware
-    // serial_print(b"[INIT] Initializing keyboard driver... ");
-    // drivers::keyboard::init();
-    // serial_print(b"OK\r\n");
-    // if fb_ok {
-    //     fb_println!("[OK] Keyboard driver loaded");
-    // }
+    serial_print(b"[INIT] Initializing keyboard driver... ");
+    drivers::keyboard::init();
+    serial_print(b"OK\r\n");
+    if fb_ok {
+        fb_println!("[OK] Keyboard driver loaded");
+    }
 
     serial_print(b"[INIT] Kernel initialization complete!\r\n");
 
@@ -171,17 +170,18 @@ pub extern "C" fn _start() -> ! {
 
     if fb_ok {
         fb_println!();
-        fb_println!("System Ready.");
-        fb_println!("Keyboard: Disabled (VMware triple fault)");
-        fb_println!("Waiting in idle loop...");
+        fb_println!("Ready. Type 'help' for commands.");
         fb_println!();
+        drivers::framebuffer::print("[ospab]~> ");
     }
 
     serial_print(b"\r\n[READY] System initialized\r\n");
 
-    // Main loop - just halt (keyboard disabled due to VMware triple fault)
+    // Main loop - process keyboard and halt
     loop {
-        // drivers::keyboard::process_scancodes(); // DISABLED
+        x86_64::instructions::interrupts::disable();
+        drivers::keyboard::process_scancodes();
+        x86_64::instructions::interrupts::enable();
         x86_64::instructions::hlt();
     }
 }

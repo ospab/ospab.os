@@ -245,7 +245,13 @@ pub fn init() -> bool {
 }
 
 pub fn is_initialized() -> bool {
-    CONSOLE.lock().is_initialized()
+    // Use try_lock to avoid deadlock in interrupt context
+    if let Some(console) = CONSOLE.try_lock() {
+        console.is_initialized()
+    } else {
+        // If locked, assume it's initialized (conservative)
+        true
+    }
 }
 
 pub fn print(s: &str) {
