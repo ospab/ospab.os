@@ -3,8 +3,6 @@
 #![allow(static_mut_refs)]
 
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use crate::println;
-use crate::drivers::keyboard::keyboard as keyboard_getter;
 use x86_64::instructions::port::Port;
 
 pub const PIC1_OFFSET: u8 = 0x20;
@@ -18,9 +16,9 @@ fn initialize_pics() {
         let mut pic2_cmd: Port<u8> = Port::new(0xA0);
         let mut pic2_data: Port<u8> = Port::new(0xA1);
         
-        // Save masks
-        let mask1 = pic1_data.read();
-        let mask2 = pic2_data.read();
+        // Save masks (not used but good practice)
+        let _mask1 = pic1_data.read();
+        let _mask2 = pic2_data.read();
         
         // ICW1: start initialization
         pic1_cmd.write(0x11);
@@ -46,9 +44,10 @@ fn initialize_pics() {
         pic2_data.write(0x01);
         wait_port.write(0);
         
-        // Restore masks (or unmask all)
-        pic1_data.write(mask1);
-        pic2_data.write(mask2);
+        // Unmask timer (IRQ0) and keyboard (IRQ1)
+        // Mask = 0 means enabled, 1 means disabled
+        pic1_data.write(0b11111100); // Enable IRQ0 (timer) and IRQ1 (keyboard)
+        pic2_data.write(0b11111111); // Mask all on PIC2
     }
 }
 
@@ -193,15 +192,23 @@ fn serial_halt(msg: &[u8]) {
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    if let Some(mut keyboard) = keyboard_getter().try_lock() {
-        keyboard.handle_interrupt();
-    }
-    notify_end_of_interrupt(InterruptIndex::Keyboard.as_u8());
+    // Read scancode directly
+    let scancode: u8 = unsafe {
+        let mut port = x86_64::instructions::port::Port::<u8>::new(0x60);
+        port.read()
+    };
+    
+    // Queue scancode for processing in main loop (don't process in ISR - not safe!)
+    crate::drivers::keyboard::queue_scancode(scancode);
+    
+    // IRQ 1 (keyboard)
+    notify_end_of_interrupt(1);
 }
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     // Just acknowledge the interrupt, don't do anything else
-    notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
+    // IRQ 0 (timer)
+    notify_end_of_interrupt(0);
 }
 
 #[derive(Debug, Clone, Copy)]

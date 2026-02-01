@@ -6,7 +6,7 @@
 [13;1H                                   [7m ospabOS [27m
 [4;1H    [32mARROWS[0m Select    [32mENTER[0m Boot    [32mE[0m Edit[4;64H[32mB[0m Blank Entry[14;1H
 
-[24;1H[2K[32mBooting automatically in [92m3[32m, press any key to stop the countdown...[0m[2K[2J[Hlimine: Loading executable `boot():/kernel.elf`...
+[24;1H[2K[32mBooting automatically in [92m3[32m, press any key to stop the countdown...[0m[24;1H[2K[32mBooting automatically in [92m2[32m, press any key to stop the countdown...[0m[24;1H[2K[32mBooting automatically in [92m1[32m, press any key to stop the countdown...[0m[2J[Hlimine: Loading executable `boot():/kernel.elf`...
 
 ========================================
          ospabOS Kernel v0.1.0         
@@ -20,14 +20,12 @@
        Width: 0x0000000000000500  Height: 0x0000000000000320
        Pitch: 0x0000000000001400  BPP: 0x0000000000000020
 [INIT] Initializing framebuffer console... OK
-[INIT] Testing framebuffer writes...
-       Writing pixel 0... OK
-       Writing pixel 1... OK
-       Writing pixel 2... OK
-       Writing pixel 3... OK
-       Writing pixel 4... OK
-       Writing pixel 5... OK
-[INIT] Test complete!
+[INIT] Printing boot info...
+[INIT] Boot info printed
 [INFO] Checking memory map...
-[INFO] Memory map found, counting...
-[INFO] Usable memory: 
+[INFO] Memory map available
+[INIT] Initializing keyboard driver... OK
+[INIT] Kernel initialization complete!
+[INIT] Enabling interrupts... OK
+
+[READY] System initialized

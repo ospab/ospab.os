@@ -40,12 +40,12 @@ impl FramebufferConsole {
             bpp: 0,
             cursor_x: 0,
             cursor_y: 0,
-            char_width: 8,
-            char_height: 8,  // Using 8x8 font
+            char_width: 12,   // 8x8 font scaled 1.5x
+            char_height: 12,
             cols: 0,
             rows: 0,
-            fg_color: 0x00AAAAAA, // Light gray
-            bg_color: 0x00000040, // Dark blue
+            fg_color: 0x00FFFFFF, // White
+            bg_color: 0x00000000, // Black
         }
     }
     
@@ -83,9 +83,8 @@ impl FramebufferConsole {
         }
         
         unsafe {
-            let color = self.bg_color | 0xFF000000; // Add alpha
-            
-            // Clear row by row
+            let color = self.bg_color | 0xFF000000;
+            // Use pitch correctly - pitch is in bytes
             for y in 0..self.height {
                 let row_ptr = self.fb_addr.add(y * self.pitch) as *mut u32;
                 for x in 0..self.width {
@@ -100,19 +99,19 @@ impl FramebufferConsole {
     
     #[inline]
     unsafe fn put_pixel(&self, x: usize, y: usize, color: u32) {
+        // Strict bounds checking for VMware compatibility
         if x >= self.width || y >= self.height {
             return;
         }
-        let offset = y * self.pitch + x * self.bpp;
-        let ptr = self.fb_addr.add(offset);
-        
-        // Assume 32-bit BGRA format
-        *ptr = (color & 0xFF) as u8;           // Blue
-        *ptr.add(1) = ((color >> 8) & 0xFF) as u8;  // Green
-        *ptr.add(2) = ((color >> 16) & 0xFF) as u8; // Red
-        if self.bpp >= 4 {
-            *ptr.add(3) = 0xFF; // Alpha
+        if self.fb_addr.is_null() {
+            return;
         }
+        
+        let offset = y * self.pitch + x * self.bpp;
+        let ptr = self.fb_addr.add(offset) as *mut u32;
+        
+        // Write as 32-bit value using write_volatile
+        core::ptr::write_volatile(ptr, color | 0xFF000000);
     }
     
     fn draw_char(&self, x: usize, y: usize, c: char) {
@@ -127,17 +126,17 @@ impl FramebufferConsole {
         
         let font_index = (c - 32) * 8; // 8 bytes per character (8x8 font)
         
-        for row in 0..self.char_height {
+        // Draw with simple nearest-neighbor scaling to 12x12
+        for py in 0..self.char_height {
+            let row = py * 8 / self.char_height; // Map to 0-7
             let font_byte = if font_index + row < FONT_8X8.len() {
                 FONT_8X8[font_index + row]
             } else {
                 0
             };
             
-            for col in 0..self.char_width {
-                let px = x + col;
-                let py = y + row;
-                
+            for px in 0..self.char_width {
+                let col = px * 8 / self.char_width; // Map to 0-7
                 let color = if (font_byte >> (7 - col)) & 1 == 1 {
                     self.fg_color
                 } else {
@@ -145,7 +144,7 @@ impl FramebufferConsole {
                 };
                 
                 unsafe {
-                    self.put_pixel(px, py, color);
+                    self.put_pixel(x + px, y + py, color);
                 }
             }
         }

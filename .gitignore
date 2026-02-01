@@ -1,0 +1,27 @@
+# Rust build artifacts
+/kernel/target/
+**/*.rs.bk
+*.pdb
+
+# Cargo lock for binary crate
+/kernel/Cargo.lock
+
+# ISO and build outputs
+*.iso
+/kernel/iso_root/kernel.elf
+serial.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log

@@ -117,7 +117,7 @@ pub extern "C" fn _start() -> ! {
         serial_print(b"NOT AVAILABLE\r\n");
     }
 
-    // Initialize framebuffer console (no clear yet)
+    // Initialize framebuffer console
     serial_print(b"[INIT] Initializing framebuffer console... ");
     let fb_ok = drivers::framebuffer::init();
     if fb_ok {
@@ -126,85 +126,65 @@ pub extern "C" fn _start() -> ! {
         serial_print(b"FAILED\r\n");
     }
 
-    // Now safe to clear screen (IDT is set up)
+    // Clear screen and show boot info
     if fb_ok {
-        serial_print(b"[INIT] Testing framebuffer writes...\r\n");
-        if let Some(fb) = boot::framebuffer() {
-            let color: u32 = 0xFFFF0000; // Red
-            let ptr = fb.address as *mut u32;
-            
-            // Use write_volatile for all framebuffer writes
-            serial_print(b"       Writing pixel 0... ");
-            unsafe { core::ptr::write_volatile(ptr, color); }
-            serial_print(b"OK\r\n");
-            
-            serial_print(b"       Writing pixel 1... ");
-            unsafe { core::ptr::write_volatile(ptr.add(1), color); }
-            serial_print(b"OK\r\n");
-            
-            serial_print(b"       Writing pixel 2... ");
-            unsafe { core::ptr::write_volatile(ptr.add(2), color); }
-            serial_print(b"OK\r\n");
-            
-            serial_print(b"       Writing pixel 3... ");
-            unsafe { core::ptr::write_volatile(ptr.add(3), color); }
-            serial_print(b"OK\r\n");
-            
-            serial_print(b"       Writing pixel 4... ");
-            unsafe { core::ptr::write_volatile(ptr.add(4), color); }
-            serial_print(b"OK\r\n");
-            
-            serial_print(b"       Writing pixel 5... ");
-            unsafe { core::ptr::write_volatile(ptr.add(5), color); }
-            serial_print(b"OK\r\n");
-        }
-        serial_print(b"[INIT] Test complete!\r\n");
-    }
-
-    // Display boot log on screen
-    if fb_ok {
+        // NOTE: clear() is slow, skip for now
+        // serial_print(b"[INIT] Clearing screen...\r\n");
+        // drivers::framebuffer::clear();
+        serial_print(b"[INIT] Printing boot info...\r\n");
         fb_println!("========================================");
-        fb_println!("         ospabOS Kernel v0.1.0         ");
+        fb_println!("       ospabOS Kernel v0.1.0");
         fb_println!("========================================");
         fb_println!();
-        fb_println!("[OK] GDT (Global Descriptor Table)");
-        fb_println!("[OK] IDT (Interrupt Descriptor Table)");
-        fb_println!("[OK] PIC (Programmable Interrupt Controller)");
-        fb_println!("[OK] Framebuffer console");
+        fb_println!("[OK] GDT initialized");
+        fb_println!("[OK] IDT initialized");
+        fb_println!("[OK] PIC configured");
+        fb_println!("[OK] Framebuffer ready");
+        fb_println!();
+        serial_print(b"[INIT] Boot info printed\r\n");
     }
 
     // Memory info
     serial_print(b"[INFO] Checking memory map...\r\n");
-    if let Some(memmap) = boot::memory_map() {
-        serial_print(b"[INFO] Memory map found, counting...\r\n");
-        let mut usable: u64 = 0;
-        for entry in memmap.iter() {
-            if entry.typ == 0 { // Usable
-                usable += entry.length;
-            }
+    if let Some(_memmap) = boot::memory_map() {
+        serial_print(b"[INFO] Memory map available\r\n");
+        if fb_ok {
+            fb_println!("[OK] Memory map available");
         }
-        serial_print(b"[INFO] Usable memory: ");
-        serial_print_dec(usable / 1024 / 1024);
-        serial_print(b" MB\r\n");
-    } else {
-        serial_print(b"[INFO] Memory map not available\r\n");
+    }
+
+    // Initialize keyboard driver
+    serial_print(b"[INIT] Initializing keyboard driver... ");
+    drivers::keyboard::init();
+    serial_print(b"OK\r\n");
+    if fb_ok {
+        fb_println!("[OK] Keyboard driver loaded");
     }
 
     serial_print(b"[INIT] Kernel initialization complete!\r\n");
-    serial_print(b"[INIT] Entering halt loop...\r\n");
 
-    // Enable interrupts
+    // Enable interrupts for keyboard
     serial_print(b"[INIT] Enabling interrupts... ");
     x86_64::instructions::interrupts::enable();
     serial_print(b"OK\r\n");
-    serial_print(b"\r\n[READY] System initialized, entering main loop\r\n");
 
-    // Main loop
+    if fb_ok {
+        fb_println!();
+        fb_println!("Ready. Type 'help' for commands.");
+        fb_println!();
+        drivers::framebuffer::print("[ospab]~> ");
+    }
+
+    serial_print(b"\r\n[READY] System initialized\r\n");
+
+    // Main loop - process keyboard and halt
     loop {
+        drivers::keyboard::process_scancodes();
         x86_64::instructions::hlt();
     }
 }
 
+#[allow(dead_code)]
 fn serial_print_dec(mut val: u64) {
     if val == 0 {
         serial_print(b"0");
