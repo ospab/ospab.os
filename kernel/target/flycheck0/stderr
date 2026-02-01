@@ -1,5 +1,5 @@
-   0.101200600s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
-   0.101246200s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-a56b1829cdb30f08\lib-ospab_os`
+   0.022111100s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
+   0.022154900s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-a56b1829cdb30f08\lib-ospab_os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -26,8 +26,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.109845100s  INFO prepare_target{force=false package_id=pc-keyboard v0.5.1 target="pc_keyboard"}: cargo::core::compiler::fingerprint: fingerprint error for pc-keyboard v0.5.1/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("pc_keyboard", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\pc-keyboard-0.5.1\\src\\lib.rs", Edition2015) }
-   0.109868700s  INFO prepare_target{force=false package_id=pc-keyboard v0.5.1 target="pc_keyboard"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\pc-keyboard-72b77ace6e3d6e75\lib-pc_keyboard`
+   0.031190600s  INFO prepare_target{force=false package_id=pc-keyboard v0.5.1 target="pc_keyboard"}: cargo::core::compiler::fingerprint: fingerprint error for pc-keyboard v0.5.1/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("pc_keyboard", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\pc-keyboard-0.5.1\\src\\lib.rs", Edition2015) }
+   0.031225100s  INFO prepare_target{force=false package_id=pc-keyboard v0.5.1 target="pc_keyboard"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\pc-keyboard-72b77ace6e3d6e75\lib-pc_keyboard`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -55,8 +55,8 @@ Stack backtrace:
   19: git_midx_writer_dump
   20: BaseThreadInitThunk
   21: RtlUserThreadStart
-   0.110259800s  INFO prepare_target{force=false package_id=spin v0.9.8 target="spin"}: cargo::core::compiler::fingerprint: fingerprint error for spin v0.9.8/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("spin", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\spin-0.9.8\\src\\lib.rs", Edition2015) }
-   0.110275000s  INFO prepare_target{force=false package_id=spin v0.9.8 target="spin"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\spin-4eb076e0e104ea54\lib-spin`
+   0.031723000s  INFO prepare_target{force=false package_id=spin v0.9.8 target="spin"}: cargo::core::compiler::fingerprint: fingerprint error for spin v0.9.8/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("spin", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\spin-0.9.8\\src\\lib.rs", Edition2015) }
+   0.031741800s  INFO prepare_target{force=false package_id=spin v0.9.8 target="spin"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\spin-4eb076e0e104ea54\lib-spin`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -84,8 +84,8 @@ Stack backtrace:
   19: git_midx_writer_dump
   20: BaseThreadInitThunk
   21: RtlUserThreadStart
-   0.110500100s  INFO prepare_target{force=false package_id=lock_api v0.4.14 target="lock_api"}: cargo::core::compiler::fingerprint: fingerprint error for lock_api v0.4.14/Check { test: false }/TargetInner { ..: lib_target("lock_api", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\lock_api-0.4.14\\src\\lib.rs", Edition2021) }
-   0.110514500s  INFO prepare_target{force=false package_id=lock_api v0.4.14 target="lock_api"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\lock_api-4115db62e481e073\lib-lock_api`
+   0.032008100s  INFO prepare_target{force=false package_id=lock_api v0.4.14 target="lock_api"}: cargo::core::compiler::fingerprint: fingerprint error for lock_api v0.4.14/Check { test: false }/TargetInner { ..: lib_target("lock_api", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\lock_api-0.4.14\\src\\lib.rs", Edition2021) }
+   0.032023300s  INFO prepare_target{force=false package_id=lock_api v0.4.14 target="lock_api"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\lock_api-4115db62e481e073\lib-lock_api`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -114,8 +114,8 @@ Stack backtrace:
   20: git_midx_writer_dump
   21: BaseThreadInitThunk
   22: RtlUserThreadStart
-   0.110756100s  INFO prepare_target{force=false package_id=scopeguard v1.2.0 target="scopeguard"}: cargo::core::compiler::fingerprint: fingerprint error for scopeguard v1.2.0/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("scopeguard", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\scopeguard-1.2.0\\src\\lib.rs", Edition2015) }
-   0.110770900s  INFO prepare_target{force=false package_id=scopeguard v1.2.0 target="scopeguard"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\scopeguard-c140e13f8be39364\lib-scopeguard`
+   0.032274700s  INFO prepare_target{force=false package_id=scopeguard v1.2.0 target="scopeguard"}: cargo::core::compiler::fingerprint: fingerprint error for scopeguard v1.2.0/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("scopeguard", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\scopeguard-1.2.0\\src\\lib.rs", Edition2015) }
+   0.032290300s  INFO prepare_target{force=false package_id=scopeguard v1.2.0 target="scopeguard"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\scopeguard-c140e13f8be39364\lib-scopeguard`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -145,8 +145,8 @@ Stack backtrace:
   21: git_midx_writer_dump
   22: BaseThreadInitThunk
   23: RtlUserThreadStart
-   0.111100100s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint: fingerprint error for uart_16550 v0.2.19/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("uart_16550", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\uart_16550-0.2.19\\src\\lib.rs", Edition2018) }
-   0.111114900s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\uart_16550-cd879d28ef21f614\lib-uart_16550`
+   0.032659500s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint: fingerprint error for uart_16550 v0.2.19/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("uart_16550", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\uart_16550-0.2.19\\src\\lib.rs", Edition2018) }
+   0.032675000s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\uart_16550-cd879d28ef21f614\lib-uart_16550`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -174,8 +174,8 @@ Stack backtrace:
   19: git_midx_writer_dump
   20: BaseThreadInitThunk
   21: RtlUserThreadStart
-   0.111363500s  INFO prepare_target{force=false package_id=bitflags v1.3.2 target="bitflags"}: cargo::core::compiler::fingerprint: fingerprint error for bitflags v1.3.2/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("bitflags", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-1.3.2\\src\\lib.rs", Edition2018) }
-   0.111387400s  INFO prepare_target{force=false package_id=bitflags v1.3.2 target="bitflags"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bitflags-a1c6e0c97c152bb7\lib-bitflags`
+   0.032902600s  INFO prepare_target{force=false package_id=bitflags v1.3.2 target="bitflags"}: cargo::core::compiler::fingerprint: fingerprint error for bitflags v1.3.2/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("bitflags", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-1.3.2\\src\\lib.rs", Edition2018) }
+   0.032917000s  INFO prepare_target{force=false package_id=bitflags v1.3.2 target="bitflags"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bitflags-a1c6e0c97c152bb7\lib-bitflags`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -204,8 +204,8 @@ Stack backtrace:
   20: git_midx_writer_dump
   21: BaseThreadInitThunk
   22: RtlUserThreadStart
-   0.112361600s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint: fingerprint error for x86_64 v0.14.13/Check { test: false }/TargetInner { ..: lib_target("x86_64", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\x86_64-0.14.13\\src\\lib.rs", Edition2018) }
-   0.112376400s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\x86_64-2d291c8dfec17855\lib-x86_64`
+   0.033878800s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint: fingerprint error for x86_64 v0.14.13/Check { test: false }/TargetInner { ..: lib_target("x86_64", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\x86_64-0.14.13\\src\\lib.rs", Edition2018) }
+   0.033894700s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\x86_64-2d291c8dfec17855\lib-x86_64`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -234,8 +234,8 @@ Stack backtrace:
   20: git_midx_writer_dump
   21: BaseThreadInitThunk
   22: RtlUserThreadStart
-   0.112623600s  INFO prepare_target{force=false package_id=bit_field v0.10.3 target="bit_field"}: cargo::core::compiler::fingerprint: fingerprint error for bit_field v0.10.3/Check { test: false }/TargetInner { ..: lib_target("bit_field", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bit_field-0.10.3\\src\\lib.rs", Edition2015) }
-   0.112637700s  INFO prepare_target{force=false package_id=bit_field v0.10.3 target="bit_field"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bit_field-c2c7b3d016f76cea\lib-bit_field`
+   0.034141400s  INFO prepare_target{force=false package_id=bit_field v0.10.3 target="bit_field"}: cargo::core::compiler::fingerprint: fingerprint error for bit_field v0.10.3/Check { test: false }/TargetInner { ..: lib_target("bit_field", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bit_field-0.10.3\\src\\lib.rs", Edition2015) }
+   0.034155600s  INFO prepare_target{force=false package_id=bit_field v0.10.3 target="bit_field"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bit_field-c2c7b3d016f76cea\lib-bit_field`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -265,8 +265,8 @@ Stack backtrace:
   21: git_midx_writer_dump
   22: BaseThreadInitThunk
   23: RtlUserThreadStart
-   0.112951500s  INFO prepare_target{force=false package_id=bitflags v2.10.0 target="bitflags"}: cargo::core::compiler::fingerprint: fingerprint error for bitflags v2.10.0/Check { test: false }/TargetInner { ..: lib_target("bitflags", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-2.10.0\\src\\lib.rs", Edition2021) }
-   0.112966400s  INFO prepare_target{force=false package_id=bitflags v2.10.0 target="bitflags"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bitflags-e8b710951c903143\lib-bitflags`
+   0.034478200s  INFO prepare_target{force=false package_id=bitflags v2.10.0 target="bitflags"}: cargo::core::compiler::fingerprint: fingerprint error for bitflags v2.10.0/Check { test: false }/TargetInner { ..: lib_target("bitflags", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-2.10.0\\src\\lib.rs", Edition2021) }
+   0.034499600s  INFO prepare_target{force=false package_id=bitflags v2.10.0 target="bitflags"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bitflags-e8b710951c903143\lib-bitflags`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -296,8 +296,8 @@ Stack backtrace:
   21: git_midx_writer_dump
   22: BaseThreadInitThunk
   23: RtlUserThreadStart
-   0.113300800s  INFO prepare_target{force=false package_id=volatile v0.4.6 target="volatile"}: cargo::core::compiler::fingerprint: fingerprint error for volatile v0.4.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("volatile", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\volatile-0.4.6\\src\\lib.rs", Edition2015) }
-   0.113315600s  INFO prepare_target{force=false package_id=volatile v0.4.6 target="volatile"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\volatile-d8d0c882a7172bd1\lib-volatile`
+   0.034927300s  INFO prepare_target{force=false package_id=volatile v0.4.6 target="volatile"}: cargo::core::compiler::fingerprint: fingerprint error for volatile v0.4.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("volatile", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\volatile-0.4.6\\src\\lib.rs", Edition2015) }
+   0.034942200s  INFO prepare_target{force=false package_id=volatile v0.4.6 target="volatile"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\volatile-d8d0c882a7172bd1\lib-volatile`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -327,8 +327,8 @@ Stack backtrace:
   21: git_midx_writer_dump
   22: BaseThreadInitThunk
   23: RtlUserThreadStart
-   0.113637800s  INFO prepare_target{force=false package_id=volatile v0.2.7 target="volatile"}: cargo::core::compiler::fingerprint: fingerprint error for volatile v0.2.7/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("volatile", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\volatile-0.2.7\\src\\lib.rs", Edition2015) }
-   0.113658400s  INFO prepare_target{force=false package_id=volatile v0.2.7 target="volatile"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\volatile-a65bb0920fd1d760\lib-volatile`
+   0.035237300s  INFO prepare_target{force=false package_id=volatile v0.2.7 target="volatile"}: cargo::core::compiler::fingerprint: fingerprint error for volatile v0.2.7/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("volatile", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\volatile-0.2.7\\src\\lib.rs", Edition2015) }
+   0.035252300s  INFO prepare_target{force=false package_id=volatile v0.2.7 target="volatile"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\volatile-a65bb0920fd1d760\lib-volatile`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -356,8 +356,8 @@ Stack backtrace:
   19: git_midx_writer_dump
   20: BaseThreadInitThunk
   21: RtlUserThreadStart
-   0.114052200s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
-   0.114068000s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-8a82310ac2b21870\test-lib-ospab_os`
+   0.035651700s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
+   0.035666900s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-8a82310ac2b21870\test-lib-ospab_os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -384,8 +384,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.114409000s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
-   0.114423400s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-276faef820bf92a4\bin-ospab-os`
+   0.035993900s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
+   0.036007700s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-276faef820bf92a4\bin-ospab-os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -412,8 +412,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.114740300s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
-   0.114753700s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-3b6c11012204a001\test-bin-ospab-os`
+   0.036330500s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
+   0.036343900s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-3b6c11012204a001\test-bin-ospab-os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -441,17 +441,17 @@ Stack backtrace:
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
     Checking bitflags v2.10.0
+    Checking scopeguard v1.2.0
     Checking volatile v0.4.6
     Checking bit_field v0.10.3
-    Checking scopeguard v1.2.0
     Checking bitflags v1.3.2
-    Checking volatile v0.2.7
     Checking pc-keyboard v0.5.1
-error: could not compile `bit_field` (lib) due to 1 previous error
-warning: build failed, waiting for other jobs to finish...
+    Checking volatile v0.2.7
 error: could not compile `scopeguard` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `bitflags` (lib) due to 1 previous error
+error: could not compile `bit_field` (lib) due to 1 previous error
 error: could not compile `volatile` (lib) due to 1 previous error
 error: could not compile `bitflags` (lib) due to 1 previous error
 error: could not compile `volatile` (lib) due to 1 previous error
-error: could not compile `bitflags` (lib) due to 1 previous error
 error: could not compile `pc-keyboard` (lib) due to 1 previous error

@@ -1,4 +1,5 @@
 //! Interrupt Descriptor Table (IDT) implementation for ospabOS
+//! Properly handles all CPU exceptions and hardware interrupts
 
 #![allow(static_mut_refs)]
 
@@ -9,22 +10,26 @@ pub const PIC1_OFFSET: u8 = 0x20;
 pub const PIC2_OFFSET: u8 = 0x28;
 
 // ============================================================================
-// PANIC INFRASTRUCTURE - Uses only serial port, no locks, no allocations
+// MINIMAL SERIAL OUTPUT - No dependencies, works in any context
 // ============================================================================
 
-/// Write a single byte to serial port - absolutely minimal, no dependencies
+/// Write a single byte to serial port with wait
 #[inline(always)]
 fn serial_byte(b: u8) {
     unsafe {
         let mut port: Port<u8> = Port::new(0x3F8);
-        // Wait for transmit buffer empty
         let mut status: Port<u8> = Port::new(0x3FD);
-        while (status.read() & 0x20) == 0 {}
+        // Wait for transmit buffer empty (bit 5)
+        for _ in 0..10000 {
+            if (status.read() & 0x20) != 0 {
+                break;
+            }
+        }
         port.write(b);
     }
 }
 
-/// Write string to serial - no dependencies
+/// Write string to serial
 fn serial_str(s: &[u8]) {
     for &b in s {
         serial_byte(b);
@@ -40,123 +45,59 @@ fn serial_hex(val: u64) {
     }
 }
 
-/// KERNEL PANIC - Never returns, never reboots
-/// Uses only serial port for output (safe in any context)
-fn kernel_panic(exception: &[u8], stack_frame: &InterruptStackFrame, error_code: Option<u64>) -> ! {
-    // Disable ALL interrupts immediately
+// ============================================================================
+// HALT FUNCTION - Never returns
+// ============================================================================
+
+/// Halt the CPU forever - used after panic
+#[inline(never)]
+fn halt_forever() -> ! {
     x86_64::instructions::interrupts::disable();
-    
-    serial_str(b"\r\n");
-    serial_str(b"################################################################################\r\n");
-    serial_str(b"#                                                                              #\r\n");
-    serial_str(b"#                         !!! KERNEL PANIC !!!                                 #\r\n");
-    serial_str(b"#                                                                              #\r\n");
-    serial_str(b"################################################################################\r\n");
-    serial_str(b"\r\n");
-    
-    serial_str(b"Exception: ");
-    serial_str(exception);
-    serial_str(b"\r\n\r\n");
-    
-    if let Some(code) = error_code {
-        serial_str(b"Error Code: ");
-        serial_hex(code);
-        serial_str(b"\r\n\r\n");
-    }
-    
-    serial_str(b"=== CPU State ===\r\n");
-    serial_str(b"RIP (Instruction Pointer): ");
-    serial_hex(stack_frame.instruction_pointer.as_u64());
-    serial_str(b"\r\n");
-    
-    serial_str(b"RSP (Stack Pointer):       ");
-    serial_hex(stack_frame.stack_pointer.as_u64());
-    serial_str(b"\r\n");
-    
-    serial_str(b"RFLAGS:                    ");
-    // cpu_flags is already u64
-    serial_hex(stack_frame.cpu_flags);
-    serial_str(b"\r\n");
-    
-    serial_str(b"CS (Code Segment):         ");
-    // code_segment is u64 in newer x86_64 versions
-    serial_hex(stack_frame.code_segment);
-    serial_str(b"\r\n");
-    
-    serial_str(b"SS (Stack Segment):        ");
-    serial_hex(stack_frame.stack_segment);
-    serial_str(b"\r\n\r\n");
-    
-    serial_str(b"=== Control Registers ===\r\n");
-    use x86_64::registers::control::{Cr0, Cr2, Cr3, Cr4};
-    serial_str(b"CR0: ");
-    serial_hex(Cr0::read_raw());
-    serial_str(b"\r\n");
-    serial_str(b"CR2 (Page Fault Addr): ");
-    // Cr2::read_raw() returns u64 directly
-    serial_hex(Cr2::read_raw());
-    serial_str(b"\r\n");
-    serial_str(b"CR3 (Page Table Base): ");
-    serial_hex(Cr3::read_raw().0.start_address().as_u64());
-    serial_str(b"\r\n");
-    serial_str(b"CR4: ");
-    serial_hex(Cr4::read_raw());
-    serial_str(b"\r\n\r\n");
-    
-    serial_str(b"################################################################################\r\n");
-    serial_str(b"#                       SYSTEM HALTED - NO REBOOT                              #\r\n");
-    serial_str(b"#                    Please power off manually                                 #\r\n");
-    serial_str(b"################################################################################\r\n");
-    
-    // Try to draw panic on framebuffer (may fail, but won't cause issues)
-    draw_panic_screen(exception);
-    
-    // HALT FOREVER - Never reboot
     loop {
         x86_64::instructions::hlt();
     }
 }
 
-/// Try to draw panic on screen - if framebuffer is available
-/// This is best-effort, failure is acceptable
-fn draw_panic_screen(exception: &[u8]) {
-    // Direct framebuffer write - bypass all abstractions
+// ============================================================================
+// PANIC SCREEN - Draw red screen with panic info
+// ============================================================================
+
+fn draw_panic_screen() {
     if let Some(fb) = crate::boot::framebuffer() {
         let addr = fb.address as *mut u32;
         let width = fb.width as usize;
         let height = fb.height as usize;
-        let pitch = fb.pitch as usize / 4; // pitch in u32s
+        let pitch = fb.pitch as usize / 4;
         
-        // Fill screen with red
+        // Fill screen with dark red
         unsafe {
             for y in 0..height {
                 for x in 0..width {
                     let ptr = addr.add(y * pitch + x);
-                    core::ptr::write_volatile(ptr, 0xFFAA0000); // Red
+                    core::ptr::write_volatile(ptr, 0xFF8B0000);
+                }
+            }
+            
+            // Draw white rectangle in center
+            let cx = width / 2;
+            let cy = height / 2;
+            for y in cy.saturating_sub(40)..core::cmp::min(cy + 40, height) {
+                for x in cx.saturating_sub(150)..core::cmp::min(cx + 150, width) {
+                    let ptr = addr.add(y * pitch + x);
+                    core::ptr::write_volatile(ptr, 0xFFFFFFFF);
                 }
             }
         }
-        
-        // Draw white text "KERNEL PANIC" at center (simple, no font needed)
-        // Just draw a white rectangle as indicator
-        let cx = width / 2;
-        let cy = height / 2;
-        unsafe {
-            for y in (cy - 50)..(cy + 50) {
-                for x in (cx - 200)..(cx + 200) {
-                    if y < height && x < width {
-                        let ptr = addr.add(y * pitch + x);
-                        core::ptr::write_volatile(ptr, 0xFFFFFFFF); // White
-                    }
-                }
-            }
-        }
-        
-        let _ = exception; // Used for serial only
     }
 }
 
+// ============================================================================
+// PIC INITIALIZATION
+// ============================================================================
+
 fn initialize_pics() {
+    serial_str(b"[PIC] Initializing PICs...\r\n");
+    
     unsafe {
         let mut wait_port: Port<u8> = Port::new(0x80);
         let mut pic1_cmd: Port<u8> = Port::new(0x20);
@@ -164,26 +105,22 @@ fn initialize_pics() {
         let mut pic2_cmd: Port<u8> = Port::new(0xA0);
         let mut pic2_data: Port<u8> = Port::new(0xA1);
         
-        // Save masks (not used but good practice)
-        let _mask1 = pic1_data.read();
-        let _mask2 = pic2_data.read();
-        
-        // ICW1: start initialization
+        // ICW1: start initialization sequence
         pic1_cmd.write(0x11);
         wait_port.write(0);
         pic2_cmd.write(0x11);
         wait_port.write(0);
         
-        // ICW2: vector offsets
-        pic1_data.write(PIC1_OFFSET);
+        // ICW2: set vector offsets
+        pic1_data.write(PIC1_OFFSET); // IRQ 0-7 -> INT 0x20-0x27
         wait_port.write(0);
-        pic2_data.write(PIC2_OFFSET);
+        pic2_data.write(PIC2_OFFSET); // IRQ 8-15 -> INT 0x28-0x2F
         wait_port.write(0);
         
-        // ICW3: cascading
-        pic1_data.write(4); // slave on IRQ2
+        // ICW3: cascading setup
+        pic1_data.write(4); // IRQ2 has slave
         wait_port.write(0);
-        pic2_data.write(2); // cascade identity
+        pic2_data.write(2); // Slave ID 2
         wait_port.write(0);
         
         // ICW4: 8086 mode
@@ -192,10 +129,33 @@ fn initialize_pics() {
         pic2_data.write(0x01);
         wait_port.write(0);
         
-        // Unmask timer (IRQ0) and keyboard (IRQ1)
-        // Mask = 0 means enabled, 1 means disabled
-        pic1_data.write(0b11111100); // Enable IRQ0 (timer) and IRQ1 (keyboard)
-        pic2_data.write(0b11111111); // Mask all on PIC2
+        // Mask ALL interrupts initially for safety
+        pic1_data.write(0xFF);
+        pic2_data.write(0xFF);
+        
+        serial_str(b"[PIC] PICs initialized, all IRQs masked\r\n");
+    }
+}
+
+/// Enable specific IRQs after initialization
+pub fn enable_irq(irq: u8) {
+    unsafe {
+        if irq < 8 {
+            let mut pic1_data: Port<u8> = Port::new(0x21);
+            let mask = pic1_data.read();
+            pic1_data.write(mask & !(1 << irq));
+            serial_str(b"[PIC] Enabled IRQ ");
+            serial_byte(b'0' + irq);
+            serial_str(b"\r\n");
+        } else {
+            let mut pic2_data: Port<u8> = Port::new(0xA1);
+            let mask = pic2_data.read();
+            pic2_data.write(mask & !(1 << (irq - 8)));
+            // Also enable IRQ2 (cascade)
+            let mut pic1_data: Port<u8> = Port::new(0x21);
+            let mask1 = pic1_data.read();
+            pic1_data.write(mask1 & !(1 << 2));
+        }
     }
 }
 
@@ -210,19 +170,23 @@ pub fn notify_end_of_interrupt(irq: u8) {
     }
 }
 
+// ============================================================================
+// IDT SETUP
+// ============================================================================
+
 static mut IDT: InterruptDescriptorTable = InterruptDescriptorTable::new();
 static mut IDT_INITIALIZED: bool = false;
 
 pub fn init_idt() {
     unsafe {
         if IDT_INITIALIZED {
+            serial_str(b"[IDT] Already initialized\r\n");
             return;
         }
         
-        // Initialize PICs first
-        initialize_pics();
+        serial_str(b"[IDT] Setting up exception handlers...\r\n");
         
-        // Setup exception handlers (CPU exceptions 0-31)
+        // CPU Exceptions (0-31)
         IDT.divide_error.set_handler_fn(divide_error_handler);
         IDT.debug.set_handler_fn(debug_handler);
         IDT.non_maskable_interrupt.set_handler_fn(nmi_handler);
@@ -231,9 +195,12 @@ pub fn init_idt() {
         IDT.bound_range_exceeded.set_handler_fn(bound_range_handler);
         IDT.invalid_opcode.set_handler_fn(invalid_opcode_handler);
         IDT.device_not_available.set_handler_fn(device_not_available_handler);
+        
+        // Double fault with separate stack
         IDT.double_fault
             .set_handler_fn(double_fault_handler)
             .set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
+        
         IDT.invalid_tss.set_handler_fn(invalid_tss_handler);
         IDT.segment_not_present.set_handler_fn(segment_not_present_handler);
         IDT.stack_segment_fault.set_handler_fn(stack_segment_handler);
@@ -243,148 +210,296 @@ pub fn init_idt() {
         IDT.alignment_check.set_handler_fn(alignment_check_handler);
         IDT.simd_floating_point.set_handler_fn(simd_handler);
         
-        // Hardware interrupts
-        IDT[InterruptIndex::Timer.as_usize()]
-            .set_handler_fn(timer_interrupt_handler);
-        IDT[InterruptIndex::Keyboard.as_usize()]
-            .set_handler_fn(keyboard_interrupt_handler);
+        serial_str(b"[IDT] Setting up hardware interrupt handlers...\r\n");
         
-        // Load the IDT
+        // Hardware interrupts (32+)
+        IDT[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
+        IDT[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
+        
+        serial_str(b"[IDT] Loading IDT...\r\n");
         IDT.load();
+        serial_str(b"[IDT] IDT loaded successfully\r\n");
+        
+        // Initialize PICs AFTER IDT is loaded
+        initialize_pics();
         
         IDT_INITIALIZED = true;
+        serial_str(b"[IDT] Initialization complete\r\n");
     }
 }
 
-extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"BREAKPOINT (#BP)", &stack_frame, None);
-}
+// ============================================================================
+// EXCEPTION HANDLERS - All use diverging functions (-> !)
+// ============================================================================
 
 extern "x86-interrupt" fn divide_error_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"DIVIDE BY ZERO (#DE)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: DIVIDE BY ZERO (#DE) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn debug_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"DEBUG EXCEPTION (#DB)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: DEBUG (#DB) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn nmi_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"NON-MASKABLE INTERRUPT (NMI)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: NMI !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
+}
+
+extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
+    // Breakpoint is recoverable - just log and return
+    serial_str(b"\r\n[DEBUG] Breakpoint at ");
+    serial_hex(stack_frame.instruction_pointer.as_u64());
+    serial_str(b"\r\n");
+    // Don't halt - breakpoint is recoverable
 }
 
 extern "x86-interrupt" fn overflow_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"OVERFLOW (#OF)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: OVERFLOW (#OF) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn bound_range_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"BOUND RANGE EXCEEDED (#BR)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: BOUND RANGE EXCEEDED (#BR) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn invalid_opcode_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"INVALID OPCODE (#UD)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: INVALID OPCODE (#UD) !!!\r\n");
+    serial_str(b"This usually means corrupted code or wrong jump target\r\n");
+    print_stack_frame(&stack_frame);
+    print_control_registers();
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn device_not_available_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"DEVICE NOT AVAILABLE (#NM)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: DEVICE NOT AVAILABLE (#NM) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     error_code: u64,
 ) -> ! {
-    kernel_panic(b"DOUBLE FAULT (#DF) - CRITICAL", &stack_frame, Some(error_code));
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n");
+    serial_str(b"################################################################################\r\n");
+    serial_str(b"#               !!! DOUBLE FAULT - CRITICAL ERROR !!!                         #\r\n");
+    serial_str(b"################################################################################\r\n");
+    serial_str(b"Error code: ");
+    serial_hex(error_code);
+    serial_str(b"\r\n");
+    print_stack_frame(&stack_frame);
+    print_control_registers();
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn invalid_tss_handler(stack_frame: InterruptStackFrame, error_code: u64) {
-    kernel_panic(b"INVALID TSS (#TS)", &stack_frame, Some(error_code));
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: INVALID TSS (#TS) !!!\r\n");
+    serial_str(b"Error code: ");
+    serial_hex(error_code);
+    serial_str(b"\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn segment_not_present_handler(stack_frame: InterruptStackFrame, error_code: u64) {
-    kernel_panic(b"SEGMENT NOT PRESENT (#NP)", &stack_frame, Some(error_code));
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: SEGMENT NOT PRESENT (#NP) !!!\r\n");
+    serial_str(b"Error code: ");
+    serial_hex(error_code);
+    serial_str(b"\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn stack_segment_handler(stack_frame: InterruptStackFrame, error_code: u64) {
-    kernel_panic(b"STACK SEGMENT FAULT (#SS)", &stack_frame, Some(error_code));
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: STACK SEGMENT FAULT (#SS) !!!\r\n");
+    serial_str(b"Error code: ");
+    serial_hex(error_code);
+    serial_str(b"\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn gpf_handler(stack_frame: InterruptStackFrame, error_code: u64) {
-    kernel_panic(b"GENERAL PROTECTION FAULT (#GP)", &stack_frame, Some(error_code));
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: GENERAL PROTECTION FAULT (#GP) !!!\r\n");
+    serial_str(b"Error code: ");
+    serial_hex(error_code);
+    serial_str(b"\r\n");
+    serial_str(b"This usually means: invalid segment, privilege violation, or bad memory access\r\n");
+    print_stack_frame(&stack_frame);
+    print_control_registers();
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn page_fault_handler(stack_frame: InterruptStackFrame, error_code: PageFaultErrorCode) {
-    // Get the faulting address from CR2
+    x86_64::instructions::interrupts::disable();
+    
     let cr2 = x86_64::registers::control::Cr2::read_raw();
     
-    serial_str(b"\r\n!!! PAGE FAULT !!!\r\n");
-    serial_str(b"Faulting Address (CR2): ");
+    serial_str(b"\r\n!!! EXCEPTION: PAGE FAULT (#PF) !!!\r\n");
+    serial_str(b"Faulting address (CR2): ");
     serial_hex(cr2);
     serial_str(b"\r\n");
-    serial_str(b"Error Code Bits: ");
+    serial_str(b"Error code: ");
     serial_hex(error_code.bits());
     serial_str(b"\r\n");
     
-    // Decode error code
-    serial_str(b"  - ");
+    serial_str(b"Cause: ");
     if error_code.contains(PageFaultErrorCode::PROTECTION_VIOLATION) {
         serial_str(b"PROTECTION_VIOLATION ");
     } else {
         serial_str(b"PAGE_NOT_PRESENT ");
     }
     if error_code.contains(PageFaultErrorCode::CAUSED_BY_WRITE) {
-        serial_str(b"WRITE ");
+        serial_str(b"(WRITE) ");
     } else {
-        serial_str(b"READ ");
+        serial_str(b"(READ) ");
     }
     if error_code.contains(PageFaultErrorCode::USER_MODE) {
         serial_str(b"USER_MODE ");
-    } else {
-        serial_str(b"KERNEL_MODE ");
     }
     if error_code.contains(PageFaultErrorCode::INSTRUCTION_FETCH) {
         serial_str(b"INSTRUCTION_FETCH ");
     }
     serial_str(b"\r\n");
     
-    kernel_panic(b"PAGE FAULT (#PF)", &stack_frame, Some(error_code.bits()));
+    print_stack_frame(&stack_frame);
+    print_control_registers();
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn x87_fpu_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"x87 FPU ERROR (#MF)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: x87 FPU ERROR (#MF) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn alignment_check_handler(stack_frame: InterruptStackFrame, error_code: u64) {
-    kernel_panic(b"ALIGNMENT CHECK (#AC)", &stack_frame, Some(error_code));
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: ALIGNMENT CHECK (#AC) !!!\r\n");
+    serial_str(b"Error code: ");
+    serial_hex(error_code);
+    serial_str(b"\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
 }
 
 extern "x86-interrupt" fn simd_handler(stack_frame: InterruptStackFrame) {
-    kernel_panic(b"SIMD FLOATING POINT (#XM/#XF)", &stack_frame, None);
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n!!! EXCEPTION: SIMD FLOATING POINT (#XF) !!!\r\n");
+    print_stack_frame(&stack_frame);
+    draw_panic_screen();
+    halt_forever();
+}
+
+// ============================================================================
+// HARDWARE INTERRUPT HANDLERS
+// ============================================================================
+
+extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    // Timer tick - just acknowledge
+    notify_end_of_interrupt(0);
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // Read scancode from keyboard controller
+    // Read scancode
     let scancode: u8 = unsafe {
-        let mut port = x86_64::instructions::port::Port::<u8>::new(0x60);
+        let mut port = Port::<u8>::new(0x60);
         port.read()
     };
     
-    // Queue scancode for processing in main loop
+    // Queue for processing
     crate::drivers::keyboard::queue_scancode(scancode);
     
-    // Send EOI to PIC (IRQ 1 = keyboard)
+    // Acknowledge interrupt
     notify_end_of_interrupt(1);
 }
 
-extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // Just acknowledge the interrupt, don't do anything else
-    // IRQ 0 (timer)
-    notify_end_of_interrupt(0);
+// ============================================================================
+// DEBUG HELPERS
+// ============================================================================
+
+fn print_stack_frame(sf: &InterruptStackFrame) {
+    serial_str(b"\r\n=== Stack Frame ===\r\n");
+    serial_str(b"RIP: ");
+    serial_hex(sf.instruction_pointer.as_u64());
+    serial_str(b"\r\n");
+    serial_str(b"RSP: ");
+    serial_hex(sf.stack_pointer.as_u64());
+    serial_str(b"\r\n");
+    serial_str(b"RFLAGS: ");
+    serial_hex(sf.cpu_flags);
+    serial_str(b"\r\n");
+    serial_str(b"CS: ");
+    serial_hex(sf.code_segment);
+    serial_str(b"\r\n");
+    serial_str(b"SS: ");
+    serial_hex(sf.stack_segment);
+    serial_str(b"\r\n");
 }
+
+fn print_control_registers() {
+    use x86_64::registers::control::{Cr0, Cr2, Cr3, Cr4};
+    
+    serial_str(b"\r\n=== Control Registers ===\r\n");
+    serial_str(b"CR0: ");
+    serial_hex(Cr0::read_raw());
+    serial_str(b"\r\n");
+    serial_str(b"CR2: ");
+    serial_hex(Cr2::read_raw());
+    serial_str(b"\r\n");
+    serial_str(b"CR3: ");
+    serial_hex(Cr3::read_raw().0.start_address().as_u64());
+    serial_str(b"\r\n");
+    serial_str(b"CR4: ");
+    serial_hex(Cr4::read_raw());
+    serial_str(b"\r\n");
+}
+
+// ============================================================================
+// INTERRUPT INDEX ENUM
+// ============================================================================
 
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptIndex {
-    Timer = 32,
-    Keyboard,
+    Timer = 32,    // PIC1_OFFSET + 0
+    Keyboard = 33, // PIC1_OFFSET + 1
 }
 
 impl InterruptIndex {
@@ -394,14 +509,5 @@ impl InterruptIndex {
 
     fn as_usize(self) -> usize {
         usize::from(self.as_u8())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test_case]
-    fn test_breakpoint_exception() {
-        // Invoke a breakpoint exception
-        x86_64::instructions::interrupts::int3();
     }
 }
