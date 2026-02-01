@@ -192,14 +192,15 @@ fn serial_halt(msg: &[u8]) {
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // Read scancode directly
-    let scancode: u8 = unsafe {
+    // MINIMAL HANDLER: Just read scancode and ACK (don't process)
+    // This prevents keyboard buffer overflow
+    let _scancode: u8 = unsafe {
         let mut port = x86_64::instructions::port::Port::<u8>::new(0x60);
         port.read()
     };
     
-    // Queue scancode for processing in main loop (don't process in ISR - not safe!)
-    crate::drivers::keyboard::queue_scancode(scancode);
+    // Don't process - just acknowledge and discard
+    // crate::drivers::keyboard::queue_scancode(scancode); // DISABLED
     
     // IRQ 1 (keyboard)
     notify_end_of_interrupt(1);

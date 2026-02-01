@@ -24,7 +24,6 @@
 [INIT] Boot info printed
 [INFO] Checking memory map...
 [INFO] Memory map available
-[INIT] Initializing keyboard driver... OK
 [INIT] Kernel initialization complete!
 [INIT] Enabling interrupts... OK
 
