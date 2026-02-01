@@ -1,8 +1,7 @@
 //! Interrupt Descriptor Table (IDT) implementation for ospabOS
-//! Properly handles all CPU exceptions and hardware interrupts
+//! Production-ready: uses spin::Lazy, no static mut
 
-#![allow(static_mut_refs)]
-
+use spin::Lazy;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use x86_64::instructions::port::Port;
 
@@ -129,11 +128,11 @@ fn initialize_pics() {
         pic2_data.write(0x01);
         wait_port.write(0);
         
-        // Mask ALL interrupts initially for safety
-        pic1_data.write(0xFF);
-        pic2_data.write(0xFF);
+        // Mask ALL interrupts except IRQ2 (cascade) for safety
+        pic1_data.write(0xFB); // 11111011 - IRQ2 enabled for cascade
+        pic2_data.write(0xFF); // All masked on PIC2
         
-        serial_str(b"[PIC] PICs initialized, all IRQs masked\r\n");
+        serial_str(b"[PIC] PICs initialized, IRQ2 (cascade) enabled\r\n");
     }
 }
 
@@ -171,61 +170,73 @@ pub fn notify_end_of_interrupt(irq: u8) {
 }
 
 // ============================================================================
-// IDT SETUP
+// IDT SETUP - Using Lazy (no static mut)
 // ============================================================================
 
-static mut IDT: InterruptDescriptorTable = InterruptDescriptorTable::new();
-static mut IDT_INITIALIZED: bool = false;
-
-pub fn init_idt() {
+/// Lazy-initialized IDT with all handlers configured
+static IDT: Lazy<InterruptDescriptorTable> = Lazy::new(|| {
+    let mut idt = InterruptDescriptorTable::new();
+    
+    // CPU Exceptions (0-31)
+    idt.divide_error.set_handler_fn(divide_error_handler);
+    idt.debug.set_handler_fn(debug_handler);
+    idt.non_maskable_interrupt.set_handler_fn(nmi_handler);
+    idt.breakpoint.set_handler_fn(breakpoint_handler);
+    idt.overflow.set_handler_fn(overflow_handler);
+    idt.bound_range_exceeded.set_handler_fn(bound_range_handler);
+    idt.invalid_opcode.set_handler_fn(invalid_opcode_handler);
+    idt.device_not_available.set_handler_fn(device_not_available_handler);
+    
+    // Double fault with separate stack (IST)
     unsafe {
-        if IDT_INITIALIZED {
-            serial_str(b"[IDT] Already initialized\r\n");
-            return;
-        }
-        
-        serial_str(b"[IDT] Setting up exception handlers...\r\n");
-        
-        // CPU Exceptions (0-31)
-        IDT.divide_error.set_handler_fn(divide_error_handler);
-        IDT.debug.set_handler_fn(debug_handler);
-        IDT.non_maskable_interrupt.set_handler_fn(nmi_handler);
-        IDT.breakpoint.set_handler_fn(breakpoint_handler);
-        IDT.overflow.set_handler_fn(overflow_handler);
-        IDT.bound_range_exceeded.set_handler_fn(bound_range_handler);
-        IDT.invalid_opcode.set_handler_fn(invalid_opcode_handler);
-        IDT.device_not_available.set_handler_fn(device_not_available_handler);
-        
-        // Double fault with separate stack
-        IDT.double_fault
+        idt.double_fault
             .set_handler_fn(double_fault_handler)
             .set_stack_index(crate::gdt::DOUBLE_FAULT_IST_INDEX);
-        
-        IDT.invalid_tss.set_handler_fn(invalid_tss_handler);
-        IDT.segment_not_present.set_handler_fn(segment_not_present_handler);
-        IDT.stack_segment_fault.set_handler_fn(stack_segment_handler);
-        IDT.general_protection_fault.set_handler_fn(gpf_handler);
-        IDT.page_fault.set_handler_fn(page_fault_handler);
-        IDT.x87_floating_point.set_handler_fn(x87_fpu_handler);
-        IDT.alignment_check.set_handler_fn(alignment_check_handler);
-        IDT.simd_floating_point.set_handler_fn(simd_handler);
-        
-        serial_str(b"[IDT] Setting up hardware interrupt handlers...\r\n");
-        
-        // Hardware interrupts (32+)
-        IDT[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
-        IDT[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
-        
-        serial_str(b"[IDT] Loading IDT...\r\n");
-        IDT.load();
-        serial_str(b"[IDT] IDT loaded successfully\r\n");
-        
-        // Initialize PICs AFTER IDT is loaded
-        initialize_pics();
-        
-        IDT_INITIALIZED = true;
-        serial_str(b"[IDT] Initialization complete\r\n");
     }
+    
+    idt.invalid_tss.set_handler_fn(invalid_tss_handler);
+    idt.segment_not_present.set_handler_fn(segment_not_present_handler);
+    idt.stack_segment_fault.set_handler_fn(stack_segment_handler);
+    idt.general_protection_fault.set_handler_fn(gpf_handler);
+    idt.page_fault.set_handler_fn(page_fault_handler);
+    idt.x87_floating_point.set_handler_fn(x87_fpu_handler);
+    idt.alignment_check.set_handler_fn(alignment_check_handler);
+    idt.simd_floating_point.set_handler_fn(simd_handler);
+    idt.machine_check.set_handler_fn(machine_check_handler);
+    idt[20].set_handler_fn(virtualization_exception_handler);
+    
+    // Hardware interrupts (32+)
+    idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
+    idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
+    
+    idt
+});
+
+/// Timer tick counter (atomic for interrupt-safety)
+use core::sync::atomic::{AtomicU64, Ordering};
+static TIMER_TICKS: AtomicU64 = AtomicU64::new(0);
+
+/// Get current tick count (interrupt-safe)
+pub fn get_ticks() -> u64 {
+    TIMER_TICKS.load(Ordering::Relaxed)
+}
+
+pub fn init_idt() {
+    serial_str(b"[IDT] Setting up exception handlers...\r\n");
+    
+    // Force lazy initialization and load IDT
+    IDT.load();
+    serial_str(b"[IDT] IDT loaded successfully\r\n");
+    
+    serial_str(b"[IDT] Setting up hardware interrupt handlers...\r\n");
+    
+    serial_str(b"[IDT] Loading IDT...\r\n");
+    serial_str(b"[IDT] IDT loaded successfully\r\n");
+    
+    // Initialize PICs AFTER IDT is loaded
+    initialize_pics();
+    
+    serial_str(b"[IDT] Initialization complete\r\n");
 }
 
 // ============================================================================
@@ -427,26 +438,66 @@ extern "x86-interrupt" fn simd_handler(stack_frame: InterruptStackFrame) {
     halt_forever();
 }
 
+extern "x86-interrupt" fn machine_check_handler(stack_frame: InterruptStackFrame) -> ! {
+    x86_64::instructions::interrupts::disable();
+    serial_str(b"\r\n");
+    serial_str(b"################################################################################\r\n");
+    serial_str(b"#             !!! MACHINE CHECK EXCEPTION (#MC) !!!                           #\r\n");
+    serial_str(b"################################################################################\r\n");
+    serial_str(b"VMware/Hardware reported critical error\r\n");
+    print_stack_frame(&stack_frame);
+    print_control_registers();
+    draw_panic_screen();
+    halt_forever();
+}
+
+extern "x86-interrupt" fn virtualization_exception_handler(stack_frame: InterruptStackFrame) {
+    // Virtualization Exception - just log and return
+    serial_str(b"\r\n[WARN] Virtualization Exception (#VE) at ");
+    serial_hex(stack_frame.instruction_pointer.as_u64());
+    serial_str(b"\r\n");
+    // Recoverable - just return
+}
+
 // ============================================================================
 // HARDWARE INTERRUPT HANDLERS
 // ============================================================================
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // Timer tick - just acknowledge
-    notify_end_of_interrupt(0);
+    // Minimal handler - just send EOI
+    unsafe {
+        core::arch::asm!(
+            "mov al, 0x20",
+            "out 0x20, al",
+            options(nomem, nostack, preserves_flags)
+        );
+    }
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // Read scancode
+    // Read status register first to check if data is available
+    let status: u8 = unsafe {
+        let mut port = Port::<u8>::new(0x64);
+        port.read()
+    };
+    
+    // Check if output buffer is full (data available)
+    if (status & 0x01) == 0 {
+        // Spurious interrupt - acknowledge and return
+        notify_end_of_interrupt(1);
+        return;
+    }
+    
+    // Read scancode from keyboard data port
     let scancode: u8 = unsafe {
         let mut port = Port::<u8>::new(0x60);
         port.read()
     };
     
-    // Queue for processing
+    // Queue for processing in main loop
     crate::drivers::keyboard::queue_scancode(scancode);
     
-    // Acknowledge interrupt
+    // Acknowledge interrupt to PIC
     notify_end_of_interrupt(1);
 }
 

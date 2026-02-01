@@ -16,5 +16,6 @@
     "ld.lld": ["-Tlinker.ld", "--gc-sections"]
   },
   "position-independent-executables": false,
-  "static-position-independent-executables": false
+  "static-position-independent-executables": false,
+  "features": "+sse,+sse2"
 }

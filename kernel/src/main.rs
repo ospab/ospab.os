@@ -4,11 +4,13 @@
 #![no_std]
 #![no_main]
 #![feature(abi_x86_interrupt)]
+#![feature(alloc_error_handler)]
 
+extern crate alloc;
 extern crate ospab_os;
 
 use core::panic::PanicInfo;
-use ospab_os::{boot, drivers, fb_println, gdt, interrupts};
+use ospab_os::{boot, drivers, fb_println, gdt, interrupts, mm, process};
 
 // ============================================================================
 // SERIAL OUTPUT - For debugging
@@ -45,7 +47,7 @@ fn serial_hex(val: u64) {
 }
 
 // ============================================================================
-// PANIC HANDLER - Never reboots
+// PANIC HANDLER - Full debug output to Serial (COM1)
 // ============================================================================
 
 #[panic_handler]
@@ -67,7 +69,43 @@ fn panic(info: &PanicInfo) -> ! {
         serial_print(b"\r\n");
     }
     
-    serial_print(b"System halted. Power off manually.\r\n");
+    // Dump control registers
+    serial_print(b"\r\n=== Control Registers ===\r\n");
+    unsafe {
+        let cr0: u64;
+        let cr2: u64;
+        let cr3: u64;
+        let cr4: u64;
+        core::arch::asm!("mov {}, cr0", out(reg) cr0);
+        core::arch::asm!("mov {}, cr2", out(reg) cr2);
+        core::arch::asm!("mov {}, cr3", out(reg) cr3);
+        core::arch::asm!("mov {}, cr4", out(reg) cr4);
+        
+        serial_print(b"CR0: ");
+        serial_hex(cr0);
+        serial_print(b"\r\n");
+        serial_print(b"CR2: ");
+        serial_hex(cr2);
+        serial_print(b"\r\n");
+        serial_print(b"CR3: ");
+        serial_hex(cr3);
+        serial_print(b"\r\n");
+        serial_print(b"CR4: ");
+        serial_hex(cr4);
+        serial_print(b"\r\n");
+    }
+    
+    // Dump RSP
+    serial_print(b"\r\n=== Stack ===\r\n");
+    unsafe {
+        let rsp: u64;
+        core::arch::asm!("mov {}, rsp", out(reg) rsp);
+        serial_print(b"RSP: ");
+        serial_hex(rsp);
+        serial_print(b"\r\n");
+    }
+    
+    serial_print(b"\r\nSystem halted. Power off manually.\r\n");
     
     // Try to show on framebuffer
     if drivers::framebuffer::is_initialized() {
@@ -91,6 +129,25 @@ pub extern "C" fn _start() -> ! {
     // CRITICAL: Disable interrupts until everything is set up
     x86_64::instructions::interrupts::disable();
     
+    // Enable SSE/SSE2 - required for x86-interrupt calling convention
+    unsafe {
+        // Set CR4.OSFXSR and CR4.OSXMMEXCPT
+        core::arch::asm!(
+            "mov rax, cr4",
+            "or rax, 0x600",  // bits 9 (OSFXSR) and 10 (OSXMMEXCPT)
+            "mov cr4, rax",
+            options(nostack, preserves_flags)
+        );
+        // Clear CR0.EM, set CR0.MP
+        core::arch::asm!(
+            "mov rax, cr0",
+            "and ax, 0xFFFB",  // clear EM (bit 2)
+            "or ax, 0x2",      // set MP (bit 1)
+            "mov cr0, rax",
+            options(nostack, preserves_flags)
+        );
+    }
+    
     serial_print(b"\r\n");
     serial_print(b"========================================\r\n");
     serial_print(b"         ospabOS Kernel v0.1.0         \r\n");
@@ -98,6 +155,9 @@ pub extern "C" fn _start() -> ! {
     
     // Step 1: Verify bootloader
     serial_print(b"[1/7] Checking Limine protocol... ");
+    serial_print(b"rev=");
+    serial_hex(boot::get_base_revision_raw());
+    serial_print(b" ");
     if !boot::base_revision_supported() {
         serial_print(b"FAILED\r\n");
         halt_forever();
@@ -114,20 +174,20 @@ pub extern "C" fn _start() -> ! {
     }
     
     // Step 3: Initialize GDT (MUST be before IDT)
-    serial_print(b"[3/7] Initializing GDT... ");
+    serial_print(b"[3/7] Initializing GDT...\r\n");
     gdt::init();
-    serial_print(b"OK\r\n");
+    serial_print(b"[3/7] GDT loaded successfully\r\n");
     
     // Step 4: Initialize IDT and PICs
-    serial_print(b"[4/7] Initializing IDT and PICs... ");
+    serial_print(b"[4/7] Initializing IDT and PICs...\r\n");
     interrupts::init_idt();
-    serial_print(b"OK\r\n");
+    serial_print(b"[4/7] IDT and PICs ready\r\n");
     
     // Step 5: Initialize framebuffer
-    serial_print(b"[5/7] Initializing framebuffer... ");
+    serial_print(b"[5/7] Initializing framebuffer...\r\n");
     let fb_ok = drivers::framebuffer::init();
     if fb_ok {
-        serial_print(b"OK\r\n");
+        serial_print(b"[5/7] Framebuffer OK\r\n");
         if let Some(fb) = boot::framebuffer() {
             serial_print(b"       Resolution: ");
             serial_hex(fb.width);
@@ -136,24 +196,44 @@ pub extern "C" fn _start() -> ! {
             serial_print(b"\r\n");
         }
     } else {
-        serial_print(b"FAILED\r\n");
+        serial_print(b"[5/7] Framebuffer FAILED\r\n");
     }
     
     // Step 6: Initialize keyboard driver (no interrupts yet)
-    serial_print(b"[6/7] Initializing keyboard driver... ");
+    serial_print(b"[6/7] Initializing keyboard driver...\r\n");
     drivers::keyboard::init();
-    serial_print(b"OK\r\n");
+    serial_print(b"[6/7] Keyboard driver ready\r\n");
     
     // Step 7: System ready
-    serial_print(b"[7/7] All components ready... OK\r\n");
+    serial_print(b"[7/7] All components initialized\r\n");
     
     serial_print(b"\r\n");
     serial_print(b"========================================\r\n");
     serial_print(b"     All systems initialized!          \r\n");
     serial_print(b"========================================\r\n");
     
+    // === LINUX-LIKE SUBSYSTEMS ===
+    serial_print(b"\r\n[SUBSYS] Initializing kernel subsystems...\r\n");
+    
+    // Memory management
+    serial_print(b"[SUBSYS] Initializing memory management...\r\n");
+    mm::init();
+    
+    // Timer (PIT)
+    serial_print(b"[SUBSYS] Initializing timer (PIT)...\r\n");
+    drivers::timer::init();
+    interrupts::enable_irq(0); // Enable timer interrupt
+    
+    // Process management
+    serial_print(b"[SUBSYS] Initializing process management...\r\n");
+    process::init();
+    
+    serial_print(b"[SUBSYS] All subsystems online\r\n");
+    
+    serial_print(b"\r\n[FB] Preparing screen output...\r\n");
     // Display welcome on screen
     if fb_ok {
+        serial_print(b"[FB] Drawing welcome screen...\r\n");
         fb_println!("========================================");
         fb_println!("       ospabOS Kernel v0.1.0");
         fb_println!("========================================");
@@ -164,37 +244,65 @@ pub extern "C" fn _start() -> ! {
         fb_println!("[OK] Framebuffer ready");
         fb_println!("[OK] Keyboard driver loaded");
         fb_println!();
+        serial_print(b"[FB] Welcome screen drawn\r\n");
+    } else {
+        serial_print(b"[FB] Skipped - framebuffer not available\r\n");
     }
     
-    // Now enable interrupts for keyboard
-    serial_print(b"\r\n[INIT] Enabling keyboard interrupt (IRQ1)...\r\n");
-    interrupts::enable_irq(1); // Enable keyboard only
-    
-    serial_print(b"[INIT] Enabling CPU interrupts (sti)...\r\n");
+    // === CRITICAL SEQUENCE FOR VMWARE ===
+    // Step 1: Enable CPU interrupts (sti)
+    serial_print(b"\r\n[INIT] Enabling CPU interrupts (sti)...\r\n");
     x86_64::instructions::interrupts::enable();
-    serial_print(b"[INIT] Interrupts enabled successfully!\r\n");
+    serial_print(b"[INIT] CPU interrupts enabled!\r\n");
     
+    // Tiny delay - system should be stable immediately
+    for _ in 0..100 {
+        core::hint::spin_loop();
+    }
+    serial_print(b"[INIT] System stable after sti\r\n");
+    
+    // Step 2: Enable keyboard IRQ (AFTER sti, at the very end)
+    serial_print(b"[INIT] Enabling keyboard hardware IRQ...\r\n");
+    drivers::keyboard::enable_hw_irq();
+    serial_print(b"[INIT] Keyboard IRQ enabled!\r\n");
+    
+    serial_print(b"\r\n[FB] Drawing prompt...\r\n");
     if fb_ok {
         fb_println!("[OK] Interrupts enabled");
         fb_println!();
         fb_println!("Ready. Type 'help' for commands.");
         fb_println!();
         drivers::framebuffer::print("[ospab]~> ");
+        drivers::framebuffer::show_cursor();
+        serial_print(b"[FB] Prompt drawn, cursor shown\r\n");
+    } else {
+        serial_print(b"[FB] Skipped - framebuffer not available\r\n");
     }
     
     serial_print(b"\r\n[READY] Entering main loop\r\n");
     
-    // Main loop
+    let mut tick_counter: u64 = 0;
+    
+    // Main event loop (Linux-style with scheduler)
     loop {
-        // Disable interrupts while processing
-        x86_64::instructions::interrupts::disable();
-        
-        // Process any queued keyboard input
+        // Process keyboard events
         drivers::keyboard::process_scancodes();
         
-        // Re-enable and wait for next interrupt
-        x86_64::instructions::interrupts::enable();
-        x86_64::instructions::hlt();
+        // Check timer ticks
+        let current_jiffies = drivers::timer::get_jiffies();
+        if current_jiffies != tick_counter {
+            tick_counter = current_jiffies;
+            
+            // Every second, print uptime
+            if tick_counter % 100 == 0 {
+                serial_print(b"[UPTIME] ");
+                serial_hex(drivers::timer::get_uptime_ms() / 1000);
+                serial_print(b" seconds\r\n");
+            }
+        }
+        
+        // Small pause to reduce CPU usage
+        core::hint::spin_loop();
     }
 }
 

@@ -26,6 +26,9 @@ pub struct FramebufferConsole {
     // Colors (32-bit BGRA)
     fg_color: u32,
     bg_color: u32,
+    
+    // Cursor blinking
+    cursor_visible: bool,
 }
 
 unsafe impl Send for FramebufferConsole {}
@@ -46,6 +49,7 @@ impl FramebufferConsole {
             rows: 0,
             fg_color: 0x00FFFFFF, // White
             bg_color: 0x00000000, // Black
+            cursor_visible: true,
         }
     }
     
@@ -235,6 +239,47 @@ impl FramebufferConsole {
     pub fn rows(&self) -> usize {
         self.rows
     }
+    
+    /// Draw cursor at current position
+    pub fn draw_cursor(&self, visible: bool) {
+        if self.fb_addr.is_null() {
+            return;
+        }
+        
+        let x = self.cursor_x * self.char_width;
+        let y = self.cursor_y * self.char_height;
+        
+        // Draw underscore cursor
+        let cursor_y_start = y + self.char_height - 2; // Bottom 2 pixels
+        let color = if visible { self.fg_color } else { self.bg_color };
+        
+        for py in 0..2 {
+            for px in 0..self.char_width {
+                unsafe {
+                    self.put_pixel(x + px, cursor_y_start + py, color);
+                }
+            }
+        }
+    }
+    
+    /// Toggle cursor visibility
+    pub fn toggle_cursor(&mut self) {
+        self.cursor_visible = !self.cursor_visible;
+        self.draw_cursor(self.cursor_visible);
+    }
+    
+    /// Hide cursor before writing
+    pub fn hide_cursor(&mut self) {
+        if self.cursor_visible {
+            self.draw_cursor(false);
+        }
+    }
+    
+    /// Show cursor after writing
+    pub fn show_cursor(&mut self) {
+        self.cursor_visible = true;
+        self.draw_cursor(true);
+    }
 }
 
 static CONSOLE: Mutex<FramebufferConsole> = Mutex::new(FramebufferConsole::empty());
@@ -280,6 +325,20 @@ pub fn clear_screen() {
 pub fn set_colors(fg: u32, bg: u32) {
     if let Some(mut console) = CONSOLE.try_lock() {
         console.set_colors(fg, bg);
+    }
+}
+
+/// Toggle cursor (called from timer interrupt)
+pub fn toggle_cursor() {
+    if let Some(mut console) = CONSOLE.try_lock() {
+        console.toggle_cursor();
+    }
+}
+
+/// Show cursor
+pub fn show_cursor() {
+    if let Some(mut console) = CONSOLE.try_lock() {
+        console.show_cursor();
     }
 }
 

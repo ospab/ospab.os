@@ -24,14 +24,24 @@ static LIMINE_REQUESTS_START: [u64; 4] = [
 #[link_section = ".limine_requests_end"]
 static LIMINE_REQUESTS_END: [u64; 2] = [0xadc0e0531bb10d03, 0x9572709f31764c62];
 
-/// Base revision tag - using revision 2 for stable features
+/// Base revision tag - bootloader sets third value to 0 if supported
+/// Format: [magic1, magic2, revision]
 #[used]
 #[link_section = ".limine_requests"]
-static mut BASE_REVISION: [u64; 3] = [0xf9562b2d5c95a6c8, 0x6a7b384944536bdc, 2];
+static mut BASE_REVISION: [u64; 3] = [
+    0xf9562b2d5c95a6c8,
+    0x6a7b384944536bdc,
+    2,  // Request revision 2 - will be set to 0 by bootloader if supported
+];
 
 /// Check if the base revision was accepted by the bootloader
 pub fn base_revision_supported() -> bool {
     unsafe { BASE_REVISION[2] == 0 }
+}
+
+/// Get the raw base revision value for debugging
+pub fn get_base_revision_raw() -> u64 {
+    unsafe { BASE_REVISION[2] }
 }
 
 // ============================================================================

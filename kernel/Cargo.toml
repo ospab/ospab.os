@@ -8,9 +8,20 @@ build = "build.rs"
 name = "ospab-os"
 path = "src/main.rs"
 
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
 [dependencies]
 spin = "0.9"
 volatile = "0.2"
 x86_64 = "0.14"
 uart_16550 = "0.2"
 pc-keyboard = "0.5"
+limine = "0.5"
+
+[dependencies.linked_list_allocator]
+version = "0.10"
+default-features = false
