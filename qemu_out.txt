@@ -34,6 +34,7 @@ OK
 [INIT] Enabling keyboard interrupt (IRQ1)...
 [PIC] Enabled IRQ 1
 [INIT] Enabling CPU interrupts (sti)...
+[INIT] sti done!
 [INIT] Interrupts enabled successfully!
 
 [READY] Entering main loop

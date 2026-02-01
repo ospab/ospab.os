@@ -6,26 +6,48 @@
 [13;1H                                   [7m ospabOS [27m
 [4;1H    [32mARROWS[0m Select    [32mENTER[0m Boot    [32mE[0m Edit[4;64H[32mB[0m Blank Entry[14;1H
 
-[24;1H[2K[32mBooting automatically in [92m3[32m, press any key to stop the countdown...[0m[24;1H[2K[32mBooting automatically in [92m2[32m, press any key to stop the countdown...[0m[24;1H[2K[32mBooting automatically in [92m1[32m, press any key to stop the countdown...[0m[2J[Hlimine: Loading executable `boot():/kernel.elf`...
+[24;1H[2K[32mBooting automatically in [92m3[32m, press any key to stop the countdown...[0m[24;1H[2K[32mBooting automatically in [92m2[32m, press any key to stop the countdown...[0m[24;1H[2K[32mBooting automatically in [92m1[32m, press any key to stop the countdown...[0m[2J[Hlimine: Loading executable `boot():/kernel`...
 
 ========================================
          ospabOS Kernel v0.1.0         
 ========================================
-[BOOT] Checking Limine protocol... OK
-[BOOT] Getting HHDM offset... OK (0xFFFF800000000000)
-[INIT] Initializing GDT... OK
-[INIT] Initializing IDT and PICs... OK
-[BOOT] Checking framebuffer... OK
-       Address: 0xFFFF8000FD000000
-       Width: 0x0000000000000500  Height: 0x0000000000000320
-       Pitch: 0x0000000000001400  BPP: 0x0000000000000020
-[INIT] Initializing framebuffer console... OK
-[INIT] Printing boot info...
-[INIT] Boot info printed
-[INFO] Checking memory map...
-[INFO] Memory map available
-[INIT] Initializing keyboard driver... OK
-[INIT] Kernel initialization complete!
-[INIT] Enabling interrupts... OK
+[1/7] Checking Limine protocol... rev=0x0000000000000000 OK
+[2/7] Getting HHDM offset... 0xFFFF800000000000 OK
+[3/7] Initializing GDT...
+[3/7] GDT loaded successfully
+[4/7] Initializing IDT and PICs...
+[IDT] Setting up exception handlers...
+[IDT] IDT loaded successfully
+[IDT] Setting up hardware interrupt handlers...
+[IDT] Loading IDT...
+[IDT] IDT loaded successfully
+[PIC] Initializing PICs...
+[PIC] PICs initialized, IRQ2 (cascade) enabled
+[IDT] Initialization complete
+[4/7] IDT and PICs ready
+[5/7] Initializing framebuffer...
+[5/7] Framebuffer OK
+       Resolution: 0x0000000000000500 x 0x0000000000000320
+[6/7] Initializing keyboard driver...
+[KBD] Initializing PS/2 controller...
+[KBD] PS/2 controller initialized (IRQ disabled)
+[6/7] Keyboard driver ready
+[7/7] All components initialized
 
-[READY] System initialized
+========================================
+     All systems initialized!          
+========================================
+
+[SUBSYS] Initializing kernel subsystems...
+[SUBSYS] Initializing memory management...
+[SUBSYS] Initializing timer (PIT)...
+[PIC] Enabled IRQ 0
+[SUBSYS] Initializing process management...
+[SUBSYS] All subsystems online
+
+[FB] Preparing screen output...
+[FB] Drawing welcome screen...
+[FB] Welcome screen drawn
+
+[INIT] Enabling CPU interrupts (sti)...
+[INIT] CPU interrupts enabled!

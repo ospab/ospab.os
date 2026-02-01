@@ -30,14 +30,14 @@ override SHESCAPE = $(subst ','\'',$(1))
 override NASMESCAPE = $(subst ','"'$(COMMA) \"'\"$(COMMA) '"',$(1))
 
 override BUILD_BIOS := limine-bios
-override BUILD_UEFI_X86_64 := 
+override BUILD_UEFI_X86_64 := limine-uefi-x86-64
 override BUILD_UEFI_IA32 := 
 override BUILD_UEFI_AARCH64 := 
 override BUILD_UEFI_RISCV64 := 
 override BUILD_UEFI_LOONGARCH64 := 
 override BUILD_UEFI_CD := no
 override BUILD_BIOS_PXE := no
-override BUILD_BIOS_CD := yes
+override BUILD_BIOS_CD := no
 
 INSTALL := /usr/bin/install -c
 INSTALL_PROGRAM := ${INSTALL}
