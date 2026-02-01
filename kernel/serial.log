@@ -1,0 +1,33 @@
+[2J[H
+[2;27H[36mLimine 10.6.3 (x86-64, BIOS)[0m
+
+
+
+[13;1H                                   [7m ospabOS [27m
+[4;1H    [32mARROWS[0m Select    [32mENTER[0m Boot    [32mE[0m Edit[4;64H[32mB[0m Blank Entry[14;1H
+
+[24;1H[2K[32mBooting automatically in [92m3[32m, press any key to stop the countdown...[0m[2K[2J[Hlimine: Loading executable `boot():/kernel.elf`...
+
+========================================
+         ospabOS Kernel v0.1.0         
+========================================
+[BOOT] Checking Limine protocol... OK
+[BOOT] Getting HHDM offset... OK (0xFFFF800000000000)
+[INIT] Initializing GDT... OK
+[INIT] Initializing IDT and PICs... OK
+[BOOT] Checking framebuffer... OK
+       Address: 0xFFFF8000FD000000
+       Width: 0x0000000000000500  Height: 0x0000000000000320
+       Pitch: 0x0000000000001400  BPP: 0x0000000000000020
+[INIT] Initializing framebuffer console... OK
+[INIT] Testing framebuffer writes...
+       Writing pixel 0... OK
+       Writing pixel 1... OK
+       Writing pixel 2... OK
+       Writing pixel 3... OK
+       Writing pixel 4... OK
+       Writing pixel 5... OK
+[INIT] Test complete!
+[INFO] Checking memory map...
+[INFO] Memory map found, counting...
+[INFO] Usable memory: 

@@ -1,7 +1,0 @@
-cargo:rerun-if-changed=D:\ospab-projects\ospab.os\kernel\Cargo.toml
-cargo:rustc-link-search=native=D:\ospab-projects\ospab.os\kernel\target\bootimage\bootloader\x86_64-bootloader\release\build\bootloader-16ba6451c81185f5\out
-cargo:rustc-link-lib=static=kernel_bin-kernel
-cargo:rerun-if-env-changed=KERNEL
-cargo:rerun-if-env-changed=KERNEL_MANIFEST
-cargo:rerun-if-changed=D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\kernel
-cargo:rerun-if-changed=build.rs

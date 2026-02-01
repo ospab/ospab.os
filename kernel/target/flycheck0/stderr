@@ -1,5 +1,5 @@
-   0.164036100s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
-   0.164099300s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\ospab-os-af1592bfa75d1742\lib-ospab_os`
+   0.097835200s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
+   0.097878400s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-a56b1829cdb30f08\lib-ospab_os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -26,38 +26,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.175051200s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="build-script-build"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/RunCustomBuild/TargetInner { ..: custom_build_target("build-script-build", "D:\\ospab-projects\\ospab.os\\kernel\\build.rs", Edition2021) }
-   0.175084100s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="build-script-build"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\ospab-os-0fa433dbf717d59c\run-build-script-build-script-build`
-
-Caused by:
-    Не удается найти указанный файл. (os error 2)
-
-Stack backtrace:
-   0: git_midx_writer_dump
-   1: git_midx_writer_dump
-   2: git_midx_writer_dump
-   3: git_midx_writer_dump
-   4: git_filter_source_repo
-   5: git_filter_source_repo
-   6: git_filter_source_repo
-   7: git_filter_source_repo
-   8: git_filter_source_repo
-   9: git_filter_source_repo
-  10: git_filter_source_repo
-  11: git_filter_source_repo
-  12: git_filter_source_repo
-  13: git_libgit2_prerelease
-  14: <unknown>
-  15: <unknown>
-  16: <unknown>
-  17: <unknown>
-  18: git_midx_writer_dump
-  19: git_filter_source_repo
-  20: git_midx_writer_dump
-  21: BaseThreadInitThunk
-  22: RtlUserThreadStart
-   0.176366500s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint: fingerprint error for uart_16550 v0.2.19/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("uart_16550", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\uart_16550-0.2.19\\src\\lib.rs", Edition2018) }
-   0.176395300s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\uart_16550-c2276b0a0705fcc8\lib-uart_16550`
+   0.106402900s  INFO prepare_target{force=false package_id=pc-keyboard v0.5.1 target="pc_keyboard"}: cargo::core::compiler::fingerprint: fingerprint error for pc-keyboard v0.5.1/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("pc_keyboard", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\pc-keyboard-0.5.1\\src\\lib.rs", Edition2015) }
+   0.106421600s  INFO prepare_target{force=false package_id=pc-keyboard v0.5.1 target="pc_keyboard"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\pc-keyboard-72b77ace6e3d6e75\lib-pc_keyboard`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -85,8 +55,37 @@ Stack backtrace:
   19: git_midx_writer_dump
   20: BaseThreadInitThunk
   21: RtlUserThreadStart
-   0.177738300s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint: fingerprint error for x86_64 v0.14.13/Check { test: false }/TargetInner { ..: lib_target("x86_64", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\x86_64-0.14.13\\src\\lib.rs", Edition2018) }
-   0.177763400s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\x86_64-e94e28736e079f9a\lib-x86_64`
+   0.106765300s  INFO prepare_target{force=false package_id=spin v0.9.8 target="spin"}: cargo::core::compiler::fingerprint: fingerprint error for spin v0.9.8/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("spin", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\spin-0.9.8\\src\\lib.rs", Edition2015) }
+   0.106780500s  INFO prepare_target{force=false package_id=spin v0.9.8 target="spin"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\spin-4eb076e0e104ea54\lib-spin`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_libgit2_prerelease
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.107013600s  INFO prepare_target{force=false package_id=lock_api v0.4.14 target="lock_api"}: cargo::core::compiler::fingerprint: fingerprint error for lock_api v0.4.14/Check { test: false }/TargetInner { ..: lib_target("lock_api", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\lock_api-0.4.14\\src\\lib.rs", Edition2021) }
+   0.107028100s  INFO prepare_target{force=false package_id=lock_api v0.4.14 target="lock_api"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\lock_api-4115db62e481e073\lib-lock_api`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -115,8 +114,250 @@ Stack backtrace:
   20: git_midx_writer_dump
   21: BaseThreadInitThunk
   22: RtlUserThreadStart
-   0.179283200s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
-   0.179321400s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\ospab-os-1087a0a55dd62379\test-lib-ospab_os`
+   0.107238600s  INFO prepare_target{force=false package_id=scopeguard v1.2.0 target="scopeguard"}: cargo::core::compiler::fingerprint: fingerprint error for scopeguard v1.2.0/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("scopeguard", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\scopeguard-1.2.0\\src\\lib.rs", Edition2015) }
+   0.107252700s  INFO prepare_target{force=false package_id=scopeguard v1.2.0 target="scopeguard"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\scopeguard-c140e13f8be39364\lib-scopeguard`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_libgit2_prerelease
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.107571900s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint: fingerprint error for uart_16550 v0.2.19/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("uart_16550", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\uart_16550-0.2.19\\src\\lib.rs", Edition2018) }
+   0.107586500s  INFO prepare_target{force=false package_id=uart_16550 v0.2.19 target="uart_16550"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\uart_16550-cd879d28ef21f614\lib-uart_16550`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_libgit2_prerelease
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.107820600s  INFO prepare_target{force=false package_id=bitflags v1.3.2 target="bitflags"}: cargo::core::compiler::fingerprint: fingerprint error for bitflags v1.3.2/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("bitflags", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-1.3.2\\src\\lib.rs", Edition2018) }
+   0.107841700s  INFO prepare_target{force=false package_id=bitflags v1.3.2 target="bitflags"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bitflags-a1c6e0c97c152bb7\lib-bitflags`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_libgit2_prerelease
+  14: <unknown>
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.108799200s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint: fingerprint error for x86_64 v0.14.13/Check { test: false }/TargetInner { ..: lib_target("x86_64", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\x86_64-0.14.13\\src\\lib.rs", Edition2018) }
+   0.108814300s  INFO prepare_target{force=false package_id=x86_64 v0.14.13 target="x86_64"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\x86_64-2d291c8dfec17855\lib-x86_64`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_libgit2_prerelease
+  14: <unknown>
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: git_midx_writer_dump
+  19: git_filter_source_repo
+  20: git_midx_writer_dump
+  21: BaseThreadInitThunk
+  22: RtlUserThreadStart
+   0.109186000s  INFO prepare_target{force=false package_id=bit_field v0.10.3 target="bit_field"}: cargo::core::compiler::fingerprint: fingerprint error for bit_field v0.10.3/Check { test: false }/TargetInner { ..: lib_target("bit_field", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bit_field-0.10.3\\src\\lib.rs", Edition2015) }
+   0.109206100s  INFO prepare_target{force=false package_id=bit_field v0.10.3 target="bit_field"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bit_field-c2c7b3d016f76cea\lib-bit_field`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_libgit2_prerelease
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.109599600s  INFO prepare_target{force=false package_id=bitflags v2.10.0 target="bitflags"}: cargo::core::compiler::fingerprint: fingerprint error for bitflags v2.10.0/Check { test: false }/TargetInner { ..: lib_target("bitflags", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\bitflags-2.10.0\\src\\lib.rs", Edition2021) }
+   0.109614600s  INFO prepare_target{force=false package_id=bitflags v2.10.0 target="bitflags"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\bitflags-e8b710951c903143\lib-bitflags`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_libgit2_prerelease
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.109949000s  INFO prepare_target{force=false package_id=volatile v0.4.6 target="volatile"}: cargo::core::compiler::fingerprint: fingerprint error for volatile v0.4.6/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("volatile", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\volatile-0.4.6\\src\\lib.rs", Edition2015) }
+   0.109964000s  INFO prepare_target{force=false package_id=volatile v0.4.6 target="volatile"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\volatile-d8d0c882a7172bd1\lib-volatile`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: git_libgit2_prerelease
+  15: <unknown>
+  16: <unknown>
+  17: <unknown>
+  18: <unknown>
+  19: git_midx_writer_dump
+  20: git_filter_source_repo
+  21: git_midx_writer_dump
+  22: BaseThreadInitThunk
+  23: RtlUserThreadStart
+   0.110350800s  INFO prepare_target{force=false package_id=volatile v0.2.7 target="volatile"}: cargo::core::compiler::fingerprint: fingerprint error for volatile v0.2.7/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("volatile", ["lib"], "C:\\Users\\gvopr\\.cargo\\registry\\src\\index.crates.io-1949cf8c6b5b557f\\volatile-0.2.7\\src\\lib.rs", Edition2015) }
+   0.110370300s  INFO prepare_target{force=false package_id=volatile v0.2.7 target="volatile"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\volatile-a65bb0920fd1d760\lib-volatile`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_libgit2_prerelease
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: <unknown>
+  17: git_midx_writer_dump
+  18: git_filter_source_repo
+  19: git_midx_writer_dump
+  20: BaseThreadInitThunk
+  21: RtlUserThreadStart
+   0.110909100s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("ospab_os", ["lib"], "D:\\ospab-projects\\ospab.os\\kernel\\src\\lib.rs", Edition2021) }
+   0.110929100s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab_os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-8a82310ac2b21870\test-lib-ospab_os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -143,8 +384,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.179842600s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
-   0.179873300s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\ospab-os-d1a3af9398c399c0\bin-ospab-os`
+   0.111330600s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: false }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
+   0.111342700s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-276faef820bf92a4\bin-ospab-os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -171,8 +412,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.180339900s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
-   0.180358500s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\.fingerprint\ospab-os-d0c08e3f9241bc96\test-bin-ospab-os`
+   0.111683100s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint: fingerprint error for ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)/Check { test: true }/TargetInner { name: "ospab-os", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\kernel\\src\\main.rs", Edition2021) }
+   0.111693800s  INFO prepare_target{force=false package_id=ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel) target="ospab-os"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\kernel\target\x86_64-ospab\debug\.fingerprint\ospab-os-3b6c11012204a001\test-bin-ospab-os`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -199,52 +440,18 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-    Checking x86_64 v0.14.13
-   Compiling ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)
-warning: ospab-os@0.1.0: Compiler family detection failed due to error: ToolNotFound: failed to find tool "cc": program not found (see https://docs.rs/cc/latest/cc/#compile-time-requirements for help)
-error: failed to run custom build command for `ospab-os v0.1.0 (D:\ospab-projects\ospab.os\kernel)`
-
-Caused by:
-  process didn't exit successfully: `D:\ospab-projects\ospab.os\kernel\target\debug\build\ospab-os-e501c8d721bf0e94\build-script-build` (exit code: 1)
-  --- stdout
-  cargo:rerun-if-changed=src/boot/limine_header.S
-  OUT_DIR = Some(D:\ospab-projects\ospab.os\kernel\target\x86_64-unknown-none\debug\build\ospab-os-0fa433dbf717d59c\out)
-  OPT_LEVEL = Some(0)
-  TARGET = Some(x86_64-unknown-none)
-  CARGO_ENCODED_RUSTFLAGS = Some()
-  HOST = Some(x86_64-pc-windows-msvc)
-  cargo:rerun-if-env-changed=CC_x86_64-unknown-none
-  CC_x86_64-unknown-none = None
-  cargo:rerun-if-env-changed=CC_x86_64_unknown_none
-  CC_x86_64_unknown_none = None
-  cargo:rerun-if-env-changed=TARGET_CC
-  TARGET_CC = None
-  cargo:rerun-if-env-changed=CC
-  CC = None
-  cargo:rerun-if-env-changed=CROSS_COMPILE
-  CROSS_COMPILE = None
-  RUSTC_LINKER = None
-  cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
-  cargo:warning=Compiler family detection failed due to error: ToolNotFound: failed to find tool "cc": program not found (see https://docs.rs/cc/latest/cc/#compile-time-requirements for help)
-  RUSTC_WRAPPER = None
-  cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
-  CRATE_CC_NO_DEFAULTS = None
-  DEBUG = Some(true)
-  CARGO_CFG_TARGET_FEATURE = Some(fxsr)
-  cargo:rerun-if-env-changed=CFLAGS
-  CFLAGS = None
-  cargo:rerun-if-env-changed=TARGET_CFLAGS
-  TARGET_CFLAGS = None
-  cargo:rerun-if-env-changed=CFLAGS_x86_64_unknown_none
-  CFLAGS_x86_64_unknown_none = None
-  cargo:rerun-if-env-changed=CFLAGS_x86_64-unknown-none
-  CFLAGS_x86_64-unknown-none = None
-
-  --- stderr
-
-
-  error occurred in cc-rs: failed to find tool "cc": program not found (see https://docs.rs/cc/latest/cc/#compile-time-requirements for help)
-
-
+    Checking bit_field v0.10.3
+    Checking bitflags v2.10.0
+    Checking scopeguard v1.2.0
+    Checking volatile v0.4.6
+    Checking bitflags v1.3.2
+    Checking volatile v0.2.7
+    Checking pc-keyboard v0.5.1
+error: could not compile `volatile` (lib) due to 1 previous error
 warning: build failed, waiting for other jobs to finish...
-error: could not compile `x86_64` (lib) due to 3 previous errors
+error: could not compile `bit_field` (lib) due to 1 previous error
+error: could not compile `scopeguard` (lib) due to 1 previous error
+error: could not compile `volatile` (lib) due to 1 previous error
+error: could not compile `bitflags` (lib) due to 1 previous error
+error: could not compile `pc-keyboard` (lib) due to 1 previous error
+error: could not compile `bitflags` (lib) due to 1 previous error

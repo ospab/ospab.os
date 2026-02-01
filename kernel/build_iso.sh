@@ -55,6 +55,16 @@ fi
 # Copy kernel into ISO root as /kernel.elf (matches limine.cfg PATH)
 cp -v "$KERNEL_BINARY" "$ISO_ROOT/kernel.elf"
 
+# Also copy kernel.elf into common Limine search locations so configs
+# that live under subdirectories can reference `kernel.elf` without
+# needing to use .. paths which may fail under some boot paths.
+mkdir -p "$ISO_ROOT/limine"
+mkdir -p "$ISO_ROOT/boot/limine"
+mkdir -p "$ISO_ROOT/EFI/BOOT"
+cp -v "$KERNEL_BINARY" "$ISO_ROOT/limine/kernel.elf" || true
+cp -v "$KERNEL_BINARY" "$ISO_ROOT/boot/limine/kernel.elf" || true
+cp -v "$KERNEL_BINARY" "$ISO_ROOT/EFI/BOOT/kernel.elf" || true
+
 # Ensure limine.cfg exists in iso root; if not, create a minimal one
 if [ -f "$LIMINE_CFG" ]; then
   cp -v "$LIMINE_CFG" "$ISO_ROOT/limine.cfg"
@@ -103,33 +113,60 @@ if [ -f "$LIMINE_TOOLS_DIR/bin/limine-eltorito-efi.bin" ]; then
   cp -v "$LIMINE_TOOLS_DIR/bin/limine-eltorito-efi.bin" "$ISO_ROOT/limine-eltorito-efi.bin"
 fi
 
-echo "[build_iso] Creating ISO with xorriso..."
+echo "[build_iso] Creating ISO..."
 
-# Build xorriso command conditionally depending on whether we have an eltorito EFI image
-if [ -f "$ISO_ROOT/limine-eltorito-efi.bin" ]; then
-  echo "[build_iso] Found limine-eltorito-efi.bin; creating hybrid BIOS+UEFI ISO"
-  xorriso -as mkisofs \
-    -o "$OUTPUT_ISO" \
-    -V "ospabOS" \
-    -J -R -l \
-    -b limine-bios-cd.bin \
-    -no-emul-boot \
-    -boot-load-size 4 \
-    -boot-info-table \
-    --efi-boot limine-eltorito-efi.bin \
-    -efi-boot-part --efi-boot-image --protective-msdos-label \
-    "$ISO_ROOT"
+# Use an absolute path for the output ISO to avoid xorriso libburn device quirks
+OUTPUT_ISO_ABS="$(realpath "$OUTPUT_ISO")"
+
+# Prefer mkisofs/genisoimage if available (more consistent on some hosts)
+if command -v mkisofs >/dev/null 2>&1; then
+  ISO_TOOL=mkisofs
+elif command -v genisoimage >/dev/null 2>&1; then
+  ISO_TOOL=genisoimage
 else
-  echo "[build_iso] No limine-eltorito-efi.bin found; creating BIOS-only ISO"
-  xorriso -as mkisofs \
-    -o "$OUTPUT_ISO" \
-    -V "ospabOS" \
-    -J -R -l \
-    -b limine-bios-cd.bin \
-    -no-emul-boot \
-    -boot-load-size 4 \
-    -boot-info-table \
-    "$ISO_ROOT"
+  ISO_TOOL="xorriso"
+fi
+
+# If the final output is on a mounted Windows filesystem (WSL /mnt/*),
+# create the ISO in a Linux temp file first and then move it into place.
+USE_TMP_OUTPUT=0
+if [[ "$OUTPUT_ISO_ABS" == /mnt/* ]]; then
+  USE_TMP_OUTPUT=1
+  TMP_OUTPUT="/tmp/$(basename "$OUTPUT_ISO_ABS").$$"
+  echo "[build_iso] Detected mounted path; will build ISO to $TMP_OUTPUT then move to $OUTPUT_ISO_ABS"
+else
+  TMP_OUTPUT="$OUTPUT_ISO_ABS"
+fi
+
+if [ -f "$ISO_ROOT/limine-eltorito-efi.bin" ]; then
+  echo "[build_iso] Found limine-eltorito-efi.bin; creating hybrid BIOS+UEFI ISO using $ISO_TOOL"
+  if [ "$ISO_TOOL" = "xorriso" ]; then
+    xorriso -as mkisofs -o "$TMP_OUTPUT" -V "ospabOS" -J -R -l \
+      -b limine-bios-cd.bin -no-emul-boot -boot-load-size 4 -boot-info-table \
+      --efi-boot limine-eltorito-efi.bin -efi-boot-part --efi-boot-image --protective-msdos-label \
+      "$ISO_ROOT"
+  else
+    "$ISO_TOOL" -o "$TMP_OUTPUT" -V "ospabOS" -J -R -l \
+      -b limine-bios-cd.bin -no-emul-boot -boot-load-size 4 -boot-info-table \
+      "$ISO_ROOT"
+  fi
+else
+  echo "[build_iso] No limine-eltorito-efi.bin found; creating BIOS-only ISO using $ISO_TOOL"
+  if [ "$ISO_TOOL" = "xorriso" ]; then
+    xorriso -as mkisofs -o "$TMP_OUTPUT" -V "ospabOS" -J -R -l \
+      -b limine-bios-cd.bin -no-emul-boot -boot-load-size 4 -boot-info-table \
+      "$ISO_ROOT"
+  else
+    "$ISO_TOOL" -o "$TMP_OUTPUT" -V "ospabOS" -J -R -l \
+      -b limine-bios-cd.bin -no-emul-boot -boot-load-size 4 -boot-info-table \
+      "$ISO_ROOT"
+  fi
+fi
+
+# If we built to a temporary output (mounted Windows path), move into place
+if [ "$USE_TMP_OUTPUT" -eq 1 ]; then
+  echo "[build_iso] Moving $TMP_OUTPUT -> $OUTPUT_ISO_ABS"
+  mv -f "$TMP_OUTPUT" "$OUTPUT_ISO_ABS"
 fi
 
 # Install Limine (bios) into the ISO if limine-install available

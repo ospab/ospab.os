@@ -11,3 +11,4 @@ pub mod interrupt;
 pub mod gdt;
 pub mod interrupts;
 pub mod shell;
+pub mod boot;

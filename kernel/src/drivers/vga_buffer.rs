@@ -30,6 +30,7 @@ const fn color_code(fg: Color, bg: Color) -> u8 {
 }
 
 pub struct Writer {
+    row_position: usize,
     column_position: usize,
     color_code: u8,
     buffer: *mut u16,
@@ -40,6 +41,7 @@ unsafe impl Send for Writer {}
 impl Writer {
     pub const fn new() -> Writer {
         Writer {
+            row_position: 0,
             column_position: 0,
             color_code: color_code(Color::LightGray, Color::Black),
             buffer: VGA_BUFFER,
@@ -55,7 +57,7 @@ impl Writer {
                 if self.column_position >= VGA_WIDTH {
                     self.new_line();
                 }
-                let row = VGA_HEIGHT - 1;
+                let row = self.row_position;
                 let col = self.column_position;
                 let v = ((self.color_code as u16) << 8) | b as u16;
                 unsafe {
@@ -67,17 +69,22 @@ impl Writer {
     }
 
     fn new_line(&mut self) {
-        // simple scroll up by one line
-        unsafe {
-            for row in 1..VGA_HEIGHT {
-                for col in 0..VGA_WIDTH {
-                    let val = core::ptr::read_volatile(self.buffer.add(row * VGA_WIDTH + col));
-                    core::ptr::write_volatile(self.buffer.add((row - 1) * VGA_WIDTH + col), val);
+        // move down a line; if at bottom, scroll up
+        if self.row_position + 1 < VGA_HEIGHT {
+            self.row_position += 1;
+        } else {
+            // scroll up by one line
+            unsafe {
+                for row in 1..VGA_HEIGHT {
+                    for col in 0..VGA_WIDTH {
+                        let val = core::ptr::read_volatile(self.buffer.add(row * VGA_WIDTH + col));
+                        core::ptr::write_volatile(self.buffer.add((row - 1) * VGA_WIDTH + col), val);
+                    }
                 }
-            }
-            // clear last line
-            for col in 0..VGA_WIDTH {
-                core::ptr::write_volatile(self.buffer.add((VGA_HEIGHT - 1) * VGA_WIDTH + col), (self.color_code as u16) << 8 | b' ' as u16);
+                // clear last line
+                for col in 0..VGA_WIDTH {
+                    core::ptr::write_volatile(self.buffer.add((VGA_HEIGHT - 1) * VGA_WIDTH + col), (self.color_code as u16) << 8 | b' ' as u16);
+                }
             }
         }
         self.column_position = 0;
@@ -91,6 +98,7 @@ impl Writer {
                 }
             }
         }
+        self.row_position = 0;
         self.column_position = 0;
     }
 
@@ -111,7 +119,9 @@ impl Writer {
 static WRITER: Mutex<Writer> = Mutex::new(Writer::new());
 
 pub fn init() {
-    WRITER.lock().clear_screen();
+    let mut w = WRITER.lock();
+    w.set_color(Color::LightGray, Color::Black);
+    w.clear_screen();
 }
 
 pub fn set_color(fg: Color, bg: Color) {

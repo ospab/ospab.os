@@ -1,7 +1,0 @@
-TIMEOUT 5
-DEFAULT 0
-
-:default
-    KERNEL_PATH /kernel.elf
-    SERIAL yes
-    SERIAL_BAUDRATE 115200
