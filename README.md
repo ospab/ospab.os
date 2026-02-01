@@ -14,19 +14,23 @@ A hobby operating system written in Rust, booted via Limine bootloader.
 
 ## Current Status
 
-⚠️ **Work in Progress** - The kernel boots successfully in QEMU but experiences triple faults in VMware. Debugging in progress.
+✅ **Stable Build** - The kernel boots successfully and runs stably with keyboard processing disabled.
 
 ### Working:
 - ✅ GDT and IDT initialization
 - ✅ PIC configuration (IRQ0 timer, IRQ1 keyboard)
 - ✅ Framebuffer console with white on black display
 - ✅ Memory map access via Limine protocol
-- ✅ Keyboard interrupt handling with ring buffer
-- ✅ Basic command shell (help, status, about, reboot)
+- ✅ Keyboard interrupt handling (scancodes read and discarded)
+- ✅ Stable idle loop (no crashes or reboots)
+
+### Temporarily Disabled:
+- ⚠️ Keyboard input processing (causes triple fault)
+- ⚠️ Command shell (depends on keyboard)
 
 ### Known Issues:
-- ❌ Triple fault in VMware (works in QEMU)
-- ❌ Keyboard input processing causes crashes
+- ❌ Keyboard scancode processing causes triple fault in VMware and QEMU
+- ❌ Calling `framebuffer::print` from keyboard handler or main loop triggers crash
 - ⚠️ No memory allocator yet
 - ⚠️ Clear screen disabled (too slow with write_volatile)
 
@@ -116,15 +120,18 @@ ospab.os/
 
 ### Triple Fault Issues
 
-The kernel currently experiences triple faults in VMware. Investigated causes:
+The kernel experiences triple faults when processing keyboard scancodes. Current investigation:
 
-1. ~~**Framebuffer writes in ISR**~~ - Fixed by ring buffer approach
-2. ~~**PIC EOI with wrong IRQ number**~~ - Fixed (use IRQ 0/1, not 32/33)
-3. ~~**spin::Once hang**~~ - Replaced with static mut + Option
-4. **Possible remaining issues**:
-   - Stack alignment in interrupt handlers
-   - Race conditions in framebuffer access
-   - Memory barrier issues with write_volatile
+**Root Cause**: Calling `framebuffer::print` (which uses `write_volatile`) appears to trigger the fault, even when called from main loop outside ISR context.
+
+**Attempted Fixes**:
+1. ✅ **Ring buffer approach** - ISR only queues scancodes, main loop processes them
+2. ✅ **Fixed PIC EOI** - Use IRQ numbers 0/1, not interrupt vector 32/33
+3. ✅ **Removed spin locks** - Replaced `spin::Once` with `static mut + Option`
+4. ✅ **Bounds checking** - Added strict framebuffer boundary checks
+5. ✅ **Safety guards** - Check `is_initialized()` before all framebuffer operations
+
+**Current Workaround**: Keyboard processing completely disabled. System boots and runs stably.
 
 ### Serial Debugging
 
