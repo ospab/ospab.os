@@ -8,6 +8,7 @@ use alloc::format;
 use crate::ipc::message::FSRequest;
 use crate::services::vfs;
 use crate::drivers::framebuffer;
+use crate::task::scheduler::SCHEDULER;
 use crate::apps::coreutils;
 
 /// Get formatted prompt string with current directory
@@ -83,8 +84,30 @@ pub fn exec_path(path: &str) -> Result<(), &'static str> {
     }
 
     if data.starts_with(b"\x7FELF") {
-        framebuffer::print("ELF exec not implemented yet\n");
-        return Err("elf not supported");
+        let load = match crate::loader::elf::load_user_elf(&data) {
+            Ok(res) => res,
+            Err(_) => {
+                framebuffer::print("ELF load failed\n");
+                return Err("elf load failed");
+            }
+        };
+
+        let entry = load.entry;
+        let user_stack = load.user_stack;
+        let addr_space = load.address_space;
+        let cr3 = addr_space.cr3.as_u64();
+
+        let mut scheduler = SCHEDULER.lock();
+        let current = match scheduler.current_task_mut() {
+            Some(task) => task,
+            None => return Err("no current task"),
+        };
+
+        current.user_stack = user_stack;
+        current.page_table = cr3;
+        current.address_space = Some(addr_space);
+
+        unsafe { crate::arch::x86_64::enter_user_mode_with_cr3(entry, user_stack, cr3); }
     }
 
     if let Ok(text) = core::str::from_utf8(&data) {
@@ -128,6 +151,7 @@ pub fn execute_command(cmd: &str) {
             framebuffer::print("  pwd      - Print working directory\n");
             framebuffer::print("  tomato   - Package manager\n");
             framebuffer::print("  doom     - Run DOOM\n");
+            framebuffer::print("  doomgeneric - Run DOOMGENERIC\n");
             framebuffer::print("  shutdown - Shutdown system\n");
             framebuffer::print("  reboot   - Reboot system\n");
         }
@@ -326,6 +350,16 @@ pub fn execute_command(cmd: &str) {
                 core::hint::spin_loop();
             }
             crate::doom::run_demo();
+        }
+        "doomgeneric" => {
+            framebuffer::print("Starting DOOMGENERIC...\n");
+            crate::doom::run_doomgeneric();
+        }
+        "ospabshell" => {
+            let path = "/bin/ospabshell".to_string();
+            if exec_path(&path).is_err() {
+                framebuffer::print("Failed to start ospabshell\n");
+            }
         }
         "shutdown" => {
             crate::power::shutdown();

@@ -23,6 +23,19 @@ echo "--- Building Kernel (ISO #$NEXT_NUM) ---"
 cd "$KERNEL_DIR"
 cargo +nightly build --release -Z build-std=core,alloc --target x86_64-ospab.json
 
+echo "--- Building User Shell ---"
+USER_SHELL_DIR="/mnt/d/ospab-projects/ospab.os/user/shell"
+USER_SHELL_TARGET="$KERNEL_DIR/x86_64-ospab.json"
+if [ -d "$USER_SHELL_DIR" ]; then
+    cd "$USER_SHELL_DIR"
+    cargo +nightly build --release -Z build-std=core --target "$USER_SHELL_TARGET"
+    mkdir -p "$KERNEL_DIR/initrd/bin"
+    cp "$USER_SHELL_DIR/target/x86_64-ospab/release/ospabshell" "$KERNEL_DIR/initrd/bin/ospabshell"
+    cd "$KERNEL_DIR"
+else
+    echo "WARN: user shell not found at $USER_SHELL_DIR"
+fi
+
 echo "--- Preparing ISO Root ---"
 rm -rf /tmp/iso_root
 # ВАЖНО: Создаем именно ту структуру, которую ищет Limine на твоих скринах
@@ -49,6 +62,11 @@ cp "$LIMINE_BIN_DIR/BOOTX64.EFI" /tmp/iso_root/EFI/BOOT/
 mkdir -p /tmp/iso_root/initrd
 if [ -d "$KERNEL_DIR/initrd" ]; then
     cp -r "$KERNEL_DIR/initrd/"* /tmp/iso_root/initrd/
+fi
+
+# Create a tarball so VFS can restore paths like /bin/ospabshell
+if [ -d "$KERNEL_DIR/initrd" ]; then
+    tar --format=ustar -C "$KERNEL_DIR/initrd" -cf /tmp/iso_root/initrd/initrd.tar .
 fi
 
 # Добавляем все .sh/.bash файлы в initrd

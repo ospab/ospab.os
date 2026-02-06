@@ -124,8 +124,23 @@ impl DoomContext {
     
     /// Update keyboard state
     pub fn update_keys(&mut self) {
-        // TODO: Use sys_read to get keyboard input
-        // For now, stub
+        // Use syscall to read keyboard input (non-blocking)
+        let mut buf = [0u8; 8];
+        let n = unsafe { syscall_read(buf.as_mut_ptr(), buf.len()) };
+        for i in 0..n {
+            let c = buf[i] as char;
+            match c {
+                'w' | 'W' => self.keys.up = true,
+                's' | 'S' => self.keys.down = true,
+                'a' | 'A' => self.keys.left = true,
+                'd' | 'D' => self.keys.right = true,
+                ' ' => self.keys.use_key = true,
+                '\x1b' => self.keys.escape = true,
+                '\x03' => self.keys.escape = true, // Ctrl+C
+                'q' | 'Q' => self.keys.escape = true,
+                _ => {}
+            }
+        }
     }
     
     /// Check if DOOM should exit
@@ -210,8 +225,9 @@ pub fn doom_task_entry() -> ! {
 unsafe fn syscall_write(buf: *const u8, len: usize) {
     core::arch::asm!(
         "mov rax, 2",
-        "mov rdi, {buf}",
-        "mov rsi, {len}",
+        "mov rdi, 1",
+        "mov rsi, {buf}",
+        "mov rdx, {len}",
         "syscall",
         buf = in(reg) buf,
         len = in(reg) len,
@@ -220,6 +236,7 @@ unsafe fn syscall_write(buf: *const u8, len: usize) {
     );
 }
 
+/// Syscall wrapper for yield
 unsafe fn syscall_yield() {
     core::arch::asm!(
         "mov rax, 0",
@@ -229,6 +246,7 @@ unsafe fn syscall_yield() {
     );
 }
 
+/// Syscall wrapper for exit
 unsafe fn syscall_exit(code: i32) -> ! {
     let code_u64 = code as u64;
     core::arch::asm!(
@@ -238,6 +256,24 @@ unsafe fn syscall_exit(code: i32) -> ! {
         code = in(reg) code_u64,
         options(noreturn)
     );
+}
+
+/// Syscall wrapper for read (keyboard input)
+unsafe fn syscall_read(ptr: *mut u8, len: usize) -> usize {
+    // Syscall number for read: 2 (example, adjust if needed)
+    let ret: usize;
+    core::arch::asm!(
+        "mov rax, 2", // syscall number: read
+        "mov rdi, {ptr}",
+        "mov rsi, {len}",
+        "syscall",
+        "mov {ret}, rax",
+        ptr = in(reg) ptr,
+        len = in(reg) len,
+        ret = out(reg) ret,
+        options(nostack, preserves_flags)
+    );
+    ret
 }
 
 /// Initialize DOOM system

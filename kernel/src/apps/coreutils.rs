@@ -1,6 +1,6 @@
 //! Minimal coreutils implemented against the VFS service.
 
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use crate::ipc::message::{FSRequest, FSResponse};
 use crate::services::vfs;

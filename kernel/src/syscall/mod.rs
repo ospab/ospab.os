@@ -9,6 +9,7 @@ use core::sync::atomic::{AtomicBool, Ordering};
 
 pub mod dispatcher;
 pub mod abi;
+pub mod entry;
 
 /// Syscall numbers (stable ABI)
 #[derive(Debug, Clone, Copy)]
@@ -23,15 +24,15 @@ pub enum SyscallNumber {
     Malloc = 6,  // New: dynamic memory allocation
     Open = 7,
     Exec = 8,
+    DrawChar = 9,
+    Chdir = 10,
+    GetCwd = 11,
+    ListDir = 12,
+    Uptime = 13,
+    Shutdown = 14,
+    Reboot = 15,
 }
 
-struct OpenFile {
-    path: String,
-    offset: usize,
-    data: Vec<u8>,
-}
-
-static FD_TABLE: Mutex<Vec<Option<OpenFile>>> = Mutex::new(Vec::new());
 static SPAWN_WORKER_STARTED: AtomicBool = AtomicBool::new(false);
 static SPAWN_QUEUE: Mutex<Vec<String>> = Mutex::new(Vec::new());
 
@@ -46,14 +47,19 @@ pub fn init() {
 /// Enable syscall support in CPU
 unsafe fn enable_syscall_support() {
     use x86_64::registers::model_specific::*;
+    use crate::gdt;
     
+    let selectors = gdt::selectors();
+    let kernel_cs = selectors.kernel_code.0 as u64;
+    let user_cs = (selectors.user_code.0 as u64) | 3;
+
     // Set STAR MSR (CS/SS for syscall/sysret)
-    // STAR[63:48] = Kernel CS (0x08)
-    // STAR[47:32] = User CS (0x18)
-    Msr::new(0xC0000081).write((0x13 << 48) | (0x08 << 32));
+    // STAR[47:32] = Kernel CS
+    // STAR[63:48] = User CS
+    Msr::new(0xC0000081).write((user_cs << 48) | (kernel_cs << 32));
     
     // Set LSTAR MSR (syscall entry point)
-    Msr::new(0xC0000082).write(syscall_handler as *const () as u64);
+    Msr::new(0xC0000082).write(entry::syscall_handler as *const () as u64);
     
     // Set SFMASK MSR (RFLAGS mask)
     Msr::new(0xC0000084).write(0x200); // Clear IF
@@ -64,28 +70,25 @@ unsafe fn enable_syscall_support() {
     Efer::write(efer);
 }
 
-/// Syscall handler entry point (called from assembly stub)
-#[no_mangle]
-pub extern "C" fn syscall_handler() -> ! {
-    // This will be implemented with proper context saving
-    // For now, just yield
-    loop {
-        x86_64::instructions::hlt();
-    }
-}
-
 /// Dispatch syscall from user space
-pub fn dispatch_syscall(num: u64, arg1: u64, arg2: u64, _arg3: u64, _arg4: u64) -> u64 {
+pub fn dispatch_syscall(num: u64, arg1: u64, arg2: u64, arg3: u64, arg4: u64, arg5: u64) -> u64 {
     match num {
         0 => sys_yield(),
         1 => sys_spawn(arg1 as *const u8, arg2 as usize),
-        2 => sys_write(arg1 as *const u8, arg2 as usize),
-        3 => sys_read(arg1 as *mut u8, arg2 as usize),
+        2 => sys_write(arg1, arg2 as *const u8, arg3 as usize),
+        3 => sys_read(arg1, arg2 as *mut u8, arg3 as usize),
         4 => sys_exit(arg1 as i32),
         5 => sys_getpid(),
         6 => sys_malloc(arg1 as usize), // New: memory allocation
         7 => sys_open(arg1 as *const u8, arg2),
         8 => sys_exec(arg1 as *const u8),
+        9 => sys_draw_char(arg1, arg2, arg3, arg4, arg5),
+        10 => sys_chdir(arg1 as *const u8),
+        11 => sys_getcwd(arg1 as *mut u8, arg2 as usize),
+        12 => sys_listdir(arg1 as *const u8, arg2 as *mut u8, arg3 as usize),
+        13 => sys_uptime(),
+        14 => sys_shutdown(),
+        15 => sys_reboot(),
         _ => !0, // Invalid syscall
     }
 }
@@ -111,37 +114,54 @@ fn sys_spawn(path_ptr: *const u8, _name_len: usize) -> u64 {
     0
 }
 
-fn sys_write(buf: *const u8, len: usize) -> u64 {
-    use crate::drivers::framebuffer;
-    
-    if buf.is_null() {
-        return !0;
-    }
-    
-    unsafe {
-        let slice = core::slice::from_raw_parts(buf, len);
-        if let Ok(s) = core::str::from_utf8(slice) {
-            framebuffer::print(s);
-            len as u64
-        } else {
-            !0
-        }
-    }
-}
-
-fn sys_read(buf: *mut u8, len: usize) -> u64 {
+fn sys_write(fd: u64, buf: *const u8, len: usize) -> u64 {
     if buf.is_null() || len == 0 {
         return 0;
     }
 
-    if let Some(ch) = crate::drivers::keyboard::try_read_key() {
-        unsafe {
-            *buf = ch as u8;
+    let mut scheduler = SCHEDULER.lock();
+    let current = match scheduler.current_task_mut() {
+        Some(task) => task,
+        None => return !0,
+    };
+
+    let handle = match current.fd_table.get_mut(fd as u32) {
+        Ok(h) => h,
+        Err(_) => return !0,
+    };
+
+    unsafe {
+        let slice = core::slice::from_raw_parts(buf, len);
+        match handle.write(slice) {
+            Ok(written) => written as u64,
+            Err(_) => !0,
         }
-        return 1;
+    }
+}
+
+fn sys_read(fd: u64, buf: *mut u8, len: usize) -> u64 {
+    if buf.is_null() || len == 0 {
+        return 0;
     }
 
-    0
+    let mut scheduler = SCHEDULER.lock();
+    let current = match scheduler.current_task_mut() {
+        Some(task) => task,
+        None => return !0,
+    };
+
+    let handle = match current.fd_table.get_mut(fd as u32) {
+        Ok(h) => h,
+        Err(_) => return !0,
+    };
+
+    unsafe {
+        let slice = core::slice::from_raw_parts_mut(buf, len);
+        match handle.read(slice) {
+            Ok(read) => read as u64,
+            Err(_) => !0,
+        }
+    }
 }
 
 fn sys_exit(_code: i32) -> u64 {
@@ -191,28 +211,18 @@ fn sys_open(path_ptr: *const u8, _flags: u64) -> u64 {
         None => return !0,
     };
 
-    let response = crate::services::vfs::process_request(
-        crate::ipc::message::FSRequest::ReadFile { path: path.clone() }
-    );
-
-    let data = match response {
-        crate::ipc::message::FSResponse::FileData(data) => data,
-        _ => return !0,
+    let handle = match crate::services::vfs::open(&path, _flags) {
+        Ok(h) => h,
+        Err(_) => return !0,
     };
 
-    let mut table = FD_TABLE.lock();
-    if table.is_empty() {
-        table.resize(3, None);
-    }
+    let mut scheduler = SCHEDULER.lock();
+    let current = match scheduler.current_task_mut() {
+        Some(task) => task,
+        None => return !0,
+    };
 
-    let fd = table.iter().position(|e| e.is_none()).unwrap_or(table.len());
-    if fd == table.len() {
-        table.push(Some(OpenFile { path, offset: 0, data }));
-    } else {
-        table[fd] = Some(OpenFile { path, offset: 0, data });
-    }
-
-    fd as u64
+    current.fd_table.insert(handle) as u64
 }
 
 fn sys_exec(path_ptr: *const u8) -> u64 {
@@ -221,10 +231,121 @@ fn sys_exec(path_ptr: *const u8) -> u64 {
         None => return !0,
     };
 
-    match crate::shell::exec_path(&path) {
+    match exec_user_path(&path) {
         Ok(_) => 0,
         Err(_) => !0,
     }
+}
+
+fn sys_draw_char(x: u64, y: u64, ch: u64, fg: u64, bg: u64) -> u64 {
+    let row = y as usize;
+    let col = x as usize;
+    let ch = (ch as u8) as char;
+    let fg = fg as u32;
+    let bg = bg as u32;
+    crate::drivers::framebuffer::draw_char_at(row, col, ch, fg, bg);
+    0
+}
+
+fn sys_chdir(path_ptr: *const u8) -> u64 {
+    let path = match read_c_string(path_ptr) {
+        Some(p) => p,
+        None => return !0,
+    };
+
+    match crate::services::vfs::process_request(crate::ipc::message::FSRequest::ChangeDir { path }) {
+        crate::ipc::message::FSResponse::Success => 0,
+        _ => !0,
+    }
+}
+
+fn sys_getcwd(buf: *mut u8, len: usize) -> u64 {
+    if buf.is_null() || len == 0 {
+        return !0;
+    }
+
+    let cwd = match crate::services::vfs::process_request(crate::ipc::message::FSRequest::GetCwd) {
+        crate::ipc::message::FSResponse::Cwd(path) => path,
+        _ => return !0,
+    };
+
+    write_user_string(buf, len, &cwd)
+}
+
+fn sys_listdir(path_ptr: *const u8, buf: *mut u8, len: usize) -> u64 {
+    if buf.is_null() || len == 0 {
+        return !0;
+    }
+
+    let path = match read_c_string(path_ptr) {
+        Some(p) => p,
+        None => return !0,
+    };
+
+    let listing = match crate::services::vfs::process_request(crate::ipc::message::FSRequest::ListDir { path }) {
+        crate::ipc::message::FSResponse::DirListing(entries) => entries.join("\n"),
+        _ => return !0,
+    };
+
+    write_user_string(buf, len, &listing)
+}
+
+fn sys_uptime() -> u64 {
+    crate::drivers::timer::get_uptime_ms()
+}
+
+fn sys_shutdown() -> u64 {
+    crate::power::shutdown();
+    0
+}
+
+fn sys_reboot() -> u64 {
+    crate::power::reboot();
+    0
+}
+
+fn write_user_string(dst: *mut u8, len: usize, s: &str) -> u64 {
+    let bytes = s.as_bytes();
+    let max = len.saturating_sub(1);
+    let to_copy = core::cmp::min(bytes.len(), max);
+    unsafe {
+        let out = core::slice::from_raw_parts_mut(dst, len);
+        out[..to_copy].copy_from_slice(&bytes[..to_copy]);
+        out[to_copy] = 0;
+    }
+    to_copy as u64
+}
+
+fn exec_user_path(path: &str) -> Result<(), &'static str> {
+    use alloc::vec::Vec;
+    use crate::task::scheduler::SCHEDULER;
+
+    let mut handle = crate::services::vfs::open(path, 0).map_err(|_| "open failed")?;
+    let mut data = Vec::new();
+    let mut buf = [0u8; 4096];
+    loop {
+        let read = handle.read(&mut buf).map_err(|_| "read failed")?;
+        if read == 0 {
+            break;
+        }
+        data.extend_from_slice(&buf[..read]);
+    }
+
+    let load = crate::loader::elf::load_user_elf(&data)?;
+
+    let entry = load.entry;
+    let user_stack = load.user_stack;
+    let addr_space = load.address_space;
+    let cr3 = addr_space.cr3.as_u64();
+
+    let mut scheduler = SCHEDULER.lock();
+    let current = scheduler.current_task_mut().ok_or("no current task")?;
+
+    current.user_stack = user_stack;
+    current.page_table = cr3;
+    current.address_space = Some(addr_space);
+
+    unsafe { crate::arch::x86_64::enter_user_mode_with_cr3(entry, user_stack, cr3); }
 }
 
 fn spawn_worker() -> ! {

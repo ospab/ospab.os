@@ -1,0 +1,1 @@
+{"rustc":3496088735106407286,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[7648903741785607723,"build_script_build",false,8802451472194174109]],"local":[{"RerunIfChanged":{"output":"x86_64-ospab/release/build/compiler_builtins-eb28a354217641d8/output","paths":["build.rs","configure.rs"]}}],"rustflags":[],"config":0,"compile_kind":0}

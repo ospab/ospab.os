@@ -45,6 +45,28 @@ pub const SYS_OPEN: u64 = 7;
 /// Execute a script or binary
 pub const SYS_EXEC: u64 = 8;
 
+/// sys_draw_char(x: u64, y: u64, ch: u64, fg: u64, bg: u64) -> status
+/// Draw a character cell using the kernel terminal renderer
+pub const SYS_DRAW_CHAR: u64 = 9;
+
+/// sys_chdir(path: *const u8) -> status
+pub const SYS_CHDIR: u64 = 10;
+
+/// sys_getcwd(buf: *mut u8, len: usize) -> bytes_written
+pub const SYS_GETCWD: u64 = 11;
+
+/// sys_listdir(path: *const u8, buf: *mut u8, len: usize) -> bytes_written
+pub const SYS_LISTDIR: u64 = 12;
+
+/// sys_uptime() -> ms
+pub const SYS_UPTIME: u64 = 13;
+
+/// sys_shutdown() -> !
+pub const SYS_SHUTDOWN: u64 = 14;
+
+/// sys_reboot() -> !
+pub const SYS_REBOOT: u64 = 15;
+
 /// Userspace syscall wrappers (for future userspace programs)
 #[allow(dead_code)]
 mod userspace {
@@ -118,5 +140,49 @@ mod userspace {
 
     pub fn exec(path: &str) -> u64 {
         unsafe { syscall1(SYS_EXEC, path.as_ptr() as u64) }
+    }
+
+    pub fn draw_char(x: u64, y: u64, ch: u64, fg: u64, bg: u64) -> u64 {
+        let ret: u64;
+        unsafe {
+            asm!(
+                "syscall",
+                in("rax") SYS_DRAW_CHAR,
+                in("rdi") x,
+                in("rsi") y,
+                in("rdx") ch,
+                in("r10") fg,
+                in("r8") bg,
+                lateout("rax") ret,
+                options(nostack, preserves_flags)
+            );
+        }
+        ret
+    }
+
+    pub fn chdir(path: &str) -> u64 {
+        unsafe { syscall1(SYS_CHDIR, path.as_ptr() as u64) }
+    }
+
+    pub fn getcwd(buf: *mut u8, len: usize) -> u64 {
+        unsafe { syscall3(SYS_GETCWD, buf as u64, len as u64, 0) }
+    }
+
+    pub fn listdir(path: &str, buf: *mut u8, len: usize) -> u64 {
+        unsafe { syscall3(SYS_LISTDIR, path.as_ptr() as u64, buf as u64, len as u64) }
+    }
+
+    pub fn uptime() -> u64 {
+        unsafe { syscall0(SYS_UPTIME) }
+    }
+
+    pub fn shutdown() -> ! {
+        unsafe { syscall0(SYS_SHUTDOWN); }
+        loop {}
+    }
+
+    pub fn reboot() -> ! {
+        unsafe { syscall0(SYS_REBOOT); }
+        loop {}
     }
 }

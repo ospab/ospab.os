@@ -25,7 +25,9 @@ pub mod shell;
 pub mod apps;
 pub mod grape;  // Grape text editor
 pub mod doom;   // DOOM port
+pub mod doomgeneric; // doomgeneric engine integration
 pub mod power;  // Power management (shutdown/reboot)
+pub mod loader; // Executable loaders
 
 // v0.1.0 "Foundation" additions
 pub mod syscall; // Syscall interface

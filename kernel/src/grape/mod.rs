@@ -164,32 +164,31 @@ impl GrapeEditor {
     
     /// Handle character input (separate from key navigation)
     fn handle_char_input(&mut self, c: char) -> bool {
-        match c {
-            // Ctrl+G = Get Help
-            '\x07' => {
-                self.show_help();
-            }
-            // Ctrl+X = Save (Write Out)
-            '\x18' => {
-                self.save_file();
-            }
-            // Ctrl+C = Exit
-            '\x03' => {
-                if self.modified {
-                    self.message = Some("Save changes first! (^X)".to_string());
-                    return false;
+            match c {
+                // Ctrl+G = Get Help
+                '\x07' => {
+                    self.show_help();
                 }
-                return true; // Exit
-            }
-            // Ctrl+W = Where Is (Search)
-            '\x17' => {
-                self.message = Some("Search: Not implemented yet".to_string());
-            }
-            // Ctrl+K = Cut line
-            '\x0B' => {
-                self.message = Some("Cut: Not implemented yet".to_string());
-            }
-            // Ctrl+U = Uncut (Paste)
+                // Ctrl+X = Save (Write Out)
+                '\x18' => {
+                    self.save_file();
+                }
+                // Ctrl+C = Exit (always exit, show warning if modified)
+                '\x03' => {
+                    if self.modified {
+                        self.message = Some("Warning: Unsaved changes! (^X to save)".to_string());
+                    }
+                    return true; // Always exit
+                }
+                // Ctrl+W = Where Is (Search)
+                '\x17' => {
+                    self.message = Some("Search: Not implemented yet".to_string());
+                }
+                // Ctrl+K = Cut line
+                '\x0B' => {
+                    self.message = Some("Cut: Not implemented yet".to_string());
+                }
+                // Ctrl+U = Uncut (Paste)
             '\x15' => {
                 self.message = Some("Paste: Not implemented yet".to_string());
             }

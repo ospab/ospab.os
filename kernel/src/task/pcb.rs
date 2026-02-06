@@ -51,6 +51,9 @@ pub struct ProcessControlBlock {
     // Memory management
     pub page_table: u64, // CR3 value
     pub address_space: Option<crate::mem::vmm::AddressSpace>, // VMM address space
+
+    // File descriptors
+    pub fd_table: crate::fs::fd::FdTable,
     
     // Linked list for scheduler
     pub next: *mut ProcessControlBlock,
@@ -72,6 +75,7 @@ impl ProcessControlBlock {
             user_stack: 0,
             page_table: 0, // Use kernel page table for now
             address_space: None, // Will be set later
+            fd_table: crate::fs::fd::FdTable::with_stdio(),
             next: ptr::null_mut(),
         });
         

@@ -285,7 +285,7 @@ pub fn handle_scancode(scancode: u8) {
     if scancode == 0xE0 {
         EXTENDED_FLAG.store(true, Ordering::Relaxed);
     } else {
-        let extended = EXTENDED_FLAG.load(Ordering::Relaxed);
+        let _extended = EXTENDED_FLAG.load(Ordering::Relaxed);
         match scancode {
             0x1D => CTRL_PRESSED.store(true, Ordering::Relaxed),  // Ctrl press (left/right)
             0x9D => CTRL_PRESSED.store(false, Ordering::Relaxed), // Ctrl release (left)

@@ -18,6 +18,8 @@ use core::ffi::CStr;
 use crate::ipc::message::{FSRequest, FSResponse};
 use crate::boot::limine;
 use crate::fs::tar;
+use crate::fs::vfs::{DeviceFileHandle, DeviceKind, FileHandle, FileSystem, FsError, MemFileHandle, OpenFlags};
+use alloc::boxed::Box;
 
 /// File type
 #[derive(Clone, PartialEq)]
@@ -126,24 +128,30 @@ impl VFSService {
         }
 
         let components: Vec<&str> = clean.split('/').filter(|s| !s.is_empty()).collect();
-        let mut current = root;
 
-        for (idx, comp) in components.iter().enumerate() {
-            let is_last = idx + 1 == components.len();
-            let children = current.children.get_or_insert_with(BTreeMap::new);
-
-            if is_last {
-                if is_dir {
-                    children.entry((*comp).to_string()).or_insert_with(|| VNode::new_dir(comp));
-                } else {
-                    let file_data = data.unwrap_or_default();
-                    children.insert(comp.to_string(), VNode::new_file(comp, file_data));
-                }
-            } else {
-                let entry = children.entry((*comp).to_string()).or_insert_with(|| VNode::new_dir(comp));
-                current = entry;
+        fn insert_components(node: &mut VNode, comps: &[&str], data: &Option<Vec<u8>>, is_dir: bool) {
+            if comps.is_empty() {
+                return;
             }
+
+            let name = comps[0];
+            let children = node.children.get_or_insert_with(BTreeMap::new);
+
+            if comps.len() == 1 {
+                if is_dir {
+                    children.entry(name.to_string()).or_insert_with(|| VNode::new_dir(name));
+                } else {
+                    let file_data = data.clone().unwrap_or_default();
+                    children.insert(name.to_string(), VNode::new_file(name, file_data));
+                }
+                return;
+            }
+
+            let child = children.entry(name.to_string()).or_insert_with(|| VNode::new_dir(name));
+            insert_components(child, &comps[1..], data, is_dir);
         }
+
+        insert_components(root, &components, &data, is_dir);
     }
 
     fn resolve_path_mut<'a>(node: &'a mut VNode, components: &[&str]) -> Option<&'a mut VNode> {
@@ -298,6 +306,45 @@ impl VFSService {
         }
         
         Some(current)
+    }
+
+    pub fn open_handle(&self, path: &str, flags: OpenFlags) -> Result<Box<dyn FileHandle>, FsError> {
+        let resolve_path = if path.starts_with('/') {
+            path.to_string()
+        } else {
+            let cwd = self.current_dir.lock().clone();
+            if cwd == "/" {
+                format!("/{}", path)
+            } else {
+                format!("{}/{}", cwd, path)
+            }
+        };
+        let resolve_path = Self::normalize_path(&resolve_path);
+
+        let node = self.resolve_path(&resolve_path).ok_or(FsError::NotFound)?;
+
+        match node.file_type {
+            FileType::Regular => {
+                if matches!(flags, OpenFlags::WriteOnly | OpenFlags::ReadWrite) {
+                    return Err(FsError::Permission);
+                }
+                let data = node.data.unwrap_or_default();
+                Ok(Box::new(MemFileHandle::new(data)))
+            }
+            FileType::Device => {
+                let dev = match node.device_id.unwrap_or(0) {
+                    0 => DeviceKind::Null,
+                    1 => DeviceKind::Zero,
+                    2 => DeviceKind::Keyboard,
+                    3 => DeviceKind::Framebuffer,
+                    4 => DeviceKind::Serial,
+                    _ => return Err(FsError::Invalid),
+                };
+                Ok(Box::new(DeviceFileHandle::new(dev)))
+            }
+            FileType::Directory => Err(FsError::NotFile),
+            FileType::Link => Err(FsError::Invalid),
+        }
     }
 
     /// Process filesystem request
@@ -473,62 +520,6 @@ impl VFSService {
                 }
                 FSResponse::Error("Not found".to_string())
             }
-                        format!("{}/{}", cwd, path)
-                    }
-                };
-
-                // Split into parent directory and filename
-                let (dirpath, filename) = if let Some(pos) = resolve_path.rfind('/') {
-                    let dir = if pos == 0 { "/".to_string() } else { resolve_path[..pos].to_string() };
-                    (dir, resolve_path[pos + 1..].to_string())
-                } else {
-                    ("/".to_string(), resolve_path.clone())
-                };
-
-                // Traverse to parent directory (mutable) and insert/overwrite file
-                let mut current = self.root.lock();
-                if dirpath == "/" {
-                    if let Some(ref mut children) = current.children {
-                        children.insert(filename.clone(), VNode::new_file(&filename, data));
-                        return FSResponse::Success;
-                    } else {
-                        return FSResponse::Error("VFS root is invalid".to_string());
-                    }
-                }
-
-                let components: Vec<&str> = dirpath.trim_start_matches('/').split('/').filter(|s| !s.is_empty()).collect();
-                // Start from root (MutexGuard lives for duration of this function)
-                let mut guard = self.root.lock();
-                let mut node: &mut VNode = &mut *guard;
-                for comp in components {
-                    if let Some(ref mut children) = node.children {
-                        if let Some(next) = children.get_mut(comp) {
-                            node = next;
-                        } else {
-                            return FSResponse::Error(format!("Directory not found: {}", dirpath));
-                        }
-                    } else {
-                        return FSResponse::Error(format!("Not a directory: {}", dirpath));
-                    }
-                }
-
-                if node.file_type != FileType::Directory {
-                    return FSResponse::Error(format!("Not a directory: {}", dirpath));
-                }
-
-                if let Some(ref mut children) = node.children {
-                    children.insert(filename.clone(), VNode::new_file(&filename, data));
-                    FSResponse::Success
-                } else {
-                    FSResponse::Error(format!("Cannot write into: {}", dirpath))
-                }
-            }
-            FSRequest::CreateDir { path } => {
-                FSResponse::Error(format!("Read-only filesystem: {}", path))
-            }
-            FSRequest::Delete { path } => {
-                FSResponse::Error(format!("Read-only filesystem: {}", path))
-            }
             FSRequest::ChangeDir { path } => {
                 let resolve_path = if path.starts_with('/') {
                     path.clone()
@@ -576,6 +567,12 @@ impl VFSService {
     }
 }
 
+impl FileSystem for VFSService {
+    fn open(&self, path: &str, flags: OpenFlags) -> Result<Box<dyn FileHandle>, FsError> {
+        self.open_handle(path, flags)
+    }
+}
+
 /// Global VFS instance
 static VFS: spin::Mutex<Option<VFSService>> = spin::Mutex::new(None);
 
@@ -594,4 +591,10 @@ pub fn process_request(request: FSRequest) -> FSResponse {
     } else {
         FSResponse::Error("VFS not initialized".to_string())
     }
+}
+
+pub fn open(path: &str, flags: u64) -> Result<Box<dyn FileHandle>, FsError> {
+    let vfs = VFS.lock();
+    let service = vfs.as_ref().ok_or(FsError::Invalid)?;
+    service.open(path, OpenFlags::from_bits(flags))
 }

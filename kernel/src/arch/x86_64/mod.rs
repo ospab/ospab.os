@@ -96,3 +96,78 @@ pub fn debug_port_write_str(s: &str) {
         debug_port_write(b);
     }
 }
+
+const USER_TRANSITION_STACK_SIZE: usize = 4096 * 4;
+
+#[repr(C, align(16))]
+struct UserTransitionStack {
+    data: [u8; USER_TRANSITION_STACK_SIZE],
+}
+
+static USER_TRANSITION_STACK: UserTransitionStack = UserTransitionStack {
+    data: [0; USER_TRANSITION_STACK_SIZE],
+};
+
+pub unsafe fn enter_user_mode(entry: u64, user_stack: u64) -> ! {
+    let selectors = crate::gdt::selectors();
+    let user_code = (selectors.user_code.0 | 3) as u64;
+    let user_data = (selectors.user_data.0 | 3) as u64;
+
+    asm!(
+        "mov ds, r8w",
+        "mov es, r8w",
+        "mov fs, r8w",
+        "mov gs, r8w",
+        "push r8",
+        "push r9",
+        "pushfq",
+        "pop rax",
+        "or rax, 0x200",
+        "push rax",
+        "push r10",
+        "push r11",
+        "iretq",
+        in("r8") user_data,
+        in("r9") user_stack,
+        in("r10") user_code,
+        in("r11") entry,
+        options(noreturn)
+    )
+}
+
+pub unsafe fn enter_user_mode_with_cr3(entry: u64, user_stack: u64, cr3: u64) -> ! {
+    let selectors = crate::gdt::selectors();
+    let user_code = (selectors.user_code.0 | 3) as u64;
+    let user_data = (selectors.user_data.0 | 3) as u64;
+
+    asm!(
+        "lea rsp, [rip + {stack_base}]",
+        "add rsp, {stack_size}",
+        "mov cr3, {cr3}",
+        "mov r8, {data}",
+        "mov r9, {ustack}",
+        "mov r10, {code}",
+        "mov r11, {entry}",
+        "mov ds, r8w",
+        "mov es, r8w",
+        "mov fs, r8w",
+        "mov gs, r8w",
+        "push r8",
+        "push r9",
+        "pushfq",
+        "pop rax",
+        "or rax, 0x200",
+        "push rax",
+        "push r10",
+        "push r11",
+        "iretq",
+        stack_base = sym USER_TRANSITION_STACK,
+        stack_size = const USER_TRANSITION_STACK_SIZE,
+        cr3 = in(reg) cr3,
+        data = in(reg) user_data,
+        ustack = in(reg) user_stack,
+        code = in(reg) user_code,
+        entry = in(reg) entry,
+        options(noreturn)
+    )
+}

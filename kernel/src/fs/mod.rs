@@ -3,3 +3,5 @@
 //! Currently includes initrd tar parsing utilities.
 
 pub mod tar;
+pub mod vfs;
+pub mod fd;

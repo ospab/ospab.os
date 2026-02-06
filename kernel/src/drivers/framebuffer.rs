@@ -262,6 +262,29 @@ impl FramebufferConsole {
             self.write_char(c);
         }
     }
+
+    pub fn draw_char_cell(&mut self, row: usize, col: usize, c: char, fg: u32, bg: u32) {
+        if self.fb_addr.is_null() {
+            return;
+        }
+
+        if row >= self.rows || col >= self.cols {
+            return;
+        }
+
+        let old_fg = self.fg_color;
+        let old_bg = self.bg_color;
+        self.fg_color = fg;
+        self.bg_color = bg;
+
+        let x = col * self.char_width;
+        let y = row * self.char_height;
+        let ch = if c.is_ascii() { c } else { '?' };
+        self.draw_char(x, y, ch);
+
+        self.fg_color = old_fg;
+        self.bg_color = old_bg;
+    }
     
     pub fn cols(&self) -> usize {
         self.cols
@@ -359,6 +382,12 @@ pub fn print(s: &str) {
 pub fn print_char(c: char) {
     if let Some(mut console) = CONSOLE.try_lock() {
         console.write_char(c);
+    }
+}
+
+pub fn draw_char_at(row: usize, col: usize, c: char, fg: u32, bg: u32) {
+    if let Some(mut console) = CONSOLE.try_lock() {
+        console.draw_char_cell(row, col, c, fg, bg);
     }
 }
 

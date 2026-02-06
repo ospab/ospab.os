@@ -1,6 +1,7 @@
     Blocking waiting for file lock on package cache
-   0.031729500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("tomato_pm", ["lib"], "D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\lib.rs", Edition2021) }
-   0.031817300s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-f4c0b7aed68b96e3\lib-tomato_pm`
+    Blocking waiting for file lock on package cache
+   0.020494800s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("tomato_pm", ["lib"], "D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\lib.rs", Edition2021) }
+   0.020556500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-f4c0b7aed68b96e3\lib-tomato_pm`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -27,8 +28,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.047107500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("tomato_pm", ["lib"], "D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\lib.rs", Edition2021) }
-   0.047155500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-7dbfe7bd0f36a608\test-lib-tomato_pm`
+   0.031943300s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("tomato_pm", ["lib"], "D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\lib.rs", Edition2021) }
+   0.031983700s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-7dbfe7bd0f36a608\test-lib-tomato_pm`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -55,8 +56,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.048234800s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: false }/TargetInner { name: "tomato-pm", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\main.rs", Edition2021) }
-   0.048280200s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-53a57aac842f45b5\bin-tomato-pm`
+   0.032771900s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: false }/TargetInner { name: "tomato-pm", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\main.rs", Edition2021) }
+   0.032806000s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-53a57aac842f45b5\bin-tomato-pm`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -83,8 +84,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.049045300s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: true }/TargetInner { name: "tomato-pm", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\main.rs", Edition2021) }
-   0.049071700s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-a41a50fb74df7637\test-bin-tomato-pm`
+   0.033334000s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: true }/TargetInner { name: "tomato-pm", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\main.rs", Edition2021) }
+   0.033354100s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-a41a50fb74df7637\test-bin-tomato-pm`
 
 Caused by:
     Не удается найти указанный файл. (os error 2)
@@ -112,6 +113,6 @@ Stack backtrace:
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
     Checking tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)
-error: could not compile `tomato-pm` (lib test) due to 1 previous error
-warning: build failed, waiting for other jobs to finish...
 error: could not compile `tomato-pm` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `tomato-pm` (lib test) due to 1 previous error

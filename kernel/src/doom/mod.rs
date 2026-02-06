@@ -17,6 +17,8 @@ static DOOM_RUNNING: AtomicBool = AtomicBool::new(false);
 // Doom configuration
 pub const DOOMGENERIC_RESX: usize = 320;
 pub const DOOMGENERIC_RESY: usize = 200;
+const DOOM_FONT_W: usize = 8;
+const DOOM_FONT_H: usize = 16;
 
 // Doom framebuffer (320x200x4 bytes RGBA)
 static mut DOOM_FRAMEBUFFER: [u32; DOOMGENERIC_RESX * DOOMGENERIC_RESY] = 
@@ -276,16 +278,15 @@ fn draw_status_bar(frame: u32) {
 
 /// Draw simple text on screen (for status bar)
 fn draw_status_text(x: usize, y: usize, text: &[u8]) {
-    for (i, &ch) in text.iter().enumerate() {
-        let char_x = x + i * 8;
-        if ch != b' ' {
-            // Draw 8x8 character
-            for dy in 0..8 {
-                for dx in 0..8 {
-                    framebuffer::set_pixel(char_x + dx, y + dy, 0xFFFFFF);
-                }
-            }
+    let row = y / DOOM_FONT_H;
+    let mut col = x / DOOM_FONT_W;
+    for &ch in text {
+        if ch == b' ' {
+            col += 1;
+            continue;
         }
+        framebuffer::draw_char_at(row, col, ch as char, 0xFFFFFF, 0x000000);
+        col += 1;
     }
 }
 
@@ -341,25 +342,24 @@ fn draw_fire_effect(frame: u32) {
     let text_y = DOOMGENERIC_RESY / 2;
     
     // Simple pixel text
-    for (i, ch) in text.chars().enumerate() {
-        if ch != ' ' {
-            draw_char_pixel(text_x + i * 8, text_y, 0xFFFFFF);
+    let row = text_y / DOOM_FONT_H;
+    let mut col = text_x / DOOM_FONT_W;
+    for ch in text.chars() {
+        if ch == ' ' {
+            col += 1;
+            continue;
         }
-    }
-}
-
-/// Draw a character as a simple block
-fn draw_char_pixel(x: usize, y: usize, color: u32) {
-    for dy in 0..8 {
-        for dx in 0..8 {
-            if x + dx < DOOMGENERIC_RESX && y + dy < DOOMGENERIC_RESY {
-                set_pixel(x + dx, y + dy, color);
-            }
-        }
+        framebuffer::draw_char_at(row, col, ch, 0xFFFFFF, 0x000000);
+        col += 1;
     }
 }
 
 /// Check if Doom is running
 pub fn is_running() -> bool {
     DOOM_RUNNING.load(Ordering::Relaxed)
+}
+
+/// Run Doom generic mode
+pub fn run_doomgeneric() {
+    crate::doomgeneric::run();
 }

@@ -2,7 +2,8 @@
 //!
 //! This parser is intentionally small and read-only.
 
-use alloc::string::String;
+use alloc::format;
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 const TAR_BLOCK_SIZE: usize = 512;
