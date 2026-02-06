@@ -27,8 +27,8 @@ impl Mutex {
         if !self.owner.is_null() && self.owner != current_task {
             // Add to wait queue
             // Allocate node using physical memory
-            use crate::mem::physical::PhysicalAllocator;
-            if let Some(addr) = PhysicalAllocator::allocate_page() {
+            use crate::mem::physical;
+            if let Some(addr) = physical::allocate_page() {
                 let node_ptr = addr as *mut WaitNode;
                 unsafe {
                     ptr::write(node_ptr, WaitNode { task: current_task, next: self.wait_queue });
@@ -51,8 +51,8 @@ impl Mutex {
                 let _next_task = (*self.wait_queue).task;
                 let next_node = (*self.wait_queue).next;
                 // Free the node
-                use crate::mem::physical::PhysicalAllocator;
-                PhysicalAllocator::free_page(self.wait_queue as usize);
+                use crate::mem::physical;
+                physical::free_page(self.wait_queue as usize);
                 self.wait_queue = next_node;
                 // Unblock task - simplified
             }

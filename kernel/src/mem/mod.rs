@@ -4,7 +4,7 @@ pub mod heap;
 pub mod vmm;
 
 pub fn init() {
-    physical::PhysicalAllocator::init();
+    physical::init();
     // Heap init would be called with actual addresses
 }
 

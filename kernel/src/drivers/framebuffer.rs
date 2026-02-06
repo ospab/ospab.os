@@ -4,7 +4,24 @@
 use crate::boot;
 use spin::Mutex;
 
-/// Simple 8x8 bitmap font (embedded)
+/// PSF2 Font Header Structure
+#[repr(C, packed)]
+#[derive(Debug, Clone, Copy)]
+pub struct PSF2Header {
+    pub magic: [u8; 4],      // 0x72, 0xb5, 0x4a, 0x86
+    pub version: u32,
+    pub headersize: u32,
+    pub flags: u32,
+    pub numglyph: u32,
+    pub bytesperglyph: u32,
+    pub height: u32,
+    pub width: u32,
+}
+
+/// Embedded PSF2 font (8x16 default)
+static PSF2_FONT: &[u8] = include_bytes!("font.psf2");
+
+/// Simple 8x8 bitmap font (embedded) - fallback
 /// Each character is 8 bytes (8 rows of 8 pixels)
 static FONT_8X8: [u8; 760] = include!("font_data.rs");
 

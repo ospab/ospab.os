@@ -11,8 +11,8 @@ impl HeapBlock {
     fn new(size: usize) -> *mut Self {
         unsafe {
             // Allocate from physical
-            use super::physical::PhysicalAllocator;
-            if let Some(addr) = PhysicalAllocator::allocate_page() {
+            use super::physical;
+            if let Some(addr) = physical::allocate_page() {
                 ptr::write(addr as *mut Self, HeapBlock { size, next: ptr::null_mut() });
                 addr as *mut Self
             } else {

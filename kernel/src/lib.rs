@@ -1,6 +1,7 @@
 #![no_std]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
+#![feature(c_variadic)]
 
 extern crate alloc;
 
@@ -24,8 +25,9 @@ pub mod services;
 pub mod shell;
 pub mod apps;
 pub mod grape;  // Grape text editor
+pub mod auth;     // User authentication system
+pub mod net;      // Network stack
 pub mod doom;   // DOOM port
-pub mod doomgeneric; // doomgeneric engine integration
 pub mod power;  // Power management (shutdown/reboot)
 pub mod loader; // Executable loaders
 

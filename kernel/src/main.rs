@@ -5,12 +5,13 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
+#![feature(c_variadic)]
 
 extern crate alloc;
 extern crate ospab_os;
 
 use core::panic::PanicInfo;
-use ospab_os::{boot, drivers, fb_println, gdt, interrupts, mm, process, ipc, services, shell, task, mem, syscall};
+use ospab_os::{boot, drivers, fb_println, gdt, interrupts, mm, process, ipc, services, shell, task, mem, syscall, auth, net};
 
 // ============================================================================
 // SERIAL OUTPUT - For debugging
@@ -275,10 +276,15 @@ pub extern "C" fn _start() -> ! {
     // VFS Service
     serial_print(b"[IPC] Initializing VFS service...\r\n");
     services::vfs::init();
-    
-    serial_print(b"[IPC] All services online\r\n");
-    
-    serial_print(b"[SUBSYS] All subsystems online\r\n");
+
+    // User Authentication System
+    serial_print(b"[AUTH] Initializing user authentication...\r\n");
+    auth::init();
+
+    // Network Stack
+    serial_print(b"[NET] Initializing network stack...\r\n");
+    net::init();
+
     
     serial_print(b"\r\n[FB] Preparing screen output...\r\n");
     // Display welcome on screen
@@ -367,8 +373,47 @@ pub extern "C" fn _start() -> ! {
 }
 
 // ============================================================================
-// HELPERS
+// PROGRESS BAR FOR BOOT LOADING - TEMPORARILY DISABLED
 // ============================================================================
+
+/*
+fn draw_progress_bar(step: usize, total: usize, message: &str) {
+    if !drivers::framebuffer::is_initialized() {
+        return;
+    }
+    
+    let bar_width = 40;
+    let filled = (step * bar_width) / total;
+    let percent = (step * 100) / total;
+    
+    // Clear previous progress area (assume lines 20-25)
+    for y in 20..26 {
+        for x in 0..80 {
+            drivers::framebuffer::set_pixel(x * 8, y * 16, 0x00000000);
+        }
+    }
+    
+    // Draw message
+    drivers::framebuffer::set_cursor(0, 20);
+    drivers::framebuffer::print(message);
+    
+    // Draw progress bar
+    drivers::framebuffer::set_cursor(0, 22);
+    drivers::framebuffer::print("[");
+    for i in 0..bar_width {
+        if i < filled {
+            drivers::framebuffer::print("█");
+        } else {
+            drivers::framebuffer::print("░");
+        }
+    }
+    drivers::framebuffer::print("]");
+    
+    // Draw percentage
+    drivers::framebuffer::set_cursor(0, 24);
+    drivers::framebuffer::print(&alloc::format!("{}% complete", percent));
+}
+*/
 
 fn halt_forever() -> ! {
     serial_print(b"FATAL: System halted\r\n");
@@ -376,3 +421,7 @@ fn halt_forever() -> ! {
         x86_64::instructions::hlt();
     }
 }
+
+// ============================================================================
+// KERNEL ENTRY POINT
+// ============================================================================

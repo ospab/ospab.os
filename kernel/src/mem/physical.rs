@@ -125,19 +125,23 @@ impl FrameAllocator {
     }
 }
 
-/// Compatibility wrapper for old PhysicalAllocator API
-pub struct PhysicalAllocator;
+/// Get memory statistics (total, used, free frames)
+pub fn stats() -> (usize, usize, usize) {
+    let allocator = FRAME_ALLOCATOR.lock();
+    allocator.stats()
+}
 
-impl PhysicalAllocator {
-    pub fn init() {
-        // Compatibility wrapper - actual init done via FRAME_ALLOCATOR.init()
-    }
+/// Allocate a physical page
+pub fn allocate_page() -> Option<usize> {
+    FRAME_ALLOCATOR.lock().allocate()
+}
 
-    pub fn allocate_page() -> Option<usize> {
-        FRAME_ALLOCATOR.lock().allocate()
-    }
+/// Free a physical page
+pub fn free_page(addr: usize) {
+    FRAME_ALLOCATOR.lock().free(addr)
+}
 
-    pub fn free_page(addr: usize) {
-        FRAME_ALLOCATOR.lock().free(addr);
-    }
+/// Initialize physical memory allocator
+pub fn init() {
+    // Physical allocator is initialized via FRAME_ALLOCATOR
 }

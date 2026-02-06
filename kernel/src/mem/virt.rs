@@ -81,8 +81,8 @@ impl VirtualMemoryManager {
         unsafe {
             let entry = (*self.pml4).get_entry(index);
             if (entry & PAGE_PRESENT) == 0 {
-                use super::physical::PhysicalAllocator;
-                if let Some(addr) = PhysicalAllocator::allocate_page() {
+                use super::physical;
+                if let Some(addr) = physical::allocate_page() {
                     ptr::write(addr as *mut PageTable, PageTable::new());
                     (*self.pml4).set_entry(index, addr as u64, PAGE_PRESENT | PAGE_WRITABLE);
                     addr as *mut PageTable
@@ -99,8 +99,8 @@ impl VirtualMemoryManager {
         unsafe {
             let entry = (*table).get_entry(index);
             if (entry & PAGE_PRESENT) == 0 {
-                use super::physical::PhysicalAllocator;
-                if let Some(addr) = PhysicalAllocator::allocate_page() {
+                use super::physical;
+                if let Some(addr) = physical::allocate_page() {
                     ptr::write(addr as *mut PageTable, PageTable::new());
                     (*table).set_entry(index, addr as u64, PAGE_PRESENT | PAGE_WRITABLE);
                     addr as *mut PageTable
