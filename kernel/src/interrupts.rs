@@ -464,7 +464,13 @@ extern "x86-interrupt" fn virtualization_exception_handler(stack_frame: Interrup
 // ============================================================================
 
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // Minimal handler - just send EOI
+    // Update timer tick count
+    crate::drivers::timer::tick();
+    
+    // Trigger task scheduling (v0.1.0)
+    // crate::task::scheduler::timer_tick(); // TODO: Enable when ready
+    
+    // Send EOI to PIC
     unsafe {
         core::arch::asm!(
             "mov al, 0x20",
@@ -475,6 +481,8 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
 }
 
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    use x86_64::instructions::port::Port;
+    
     // Read status register first to check if data is available
     let status: u8 = unsafe {
         let mut port = Port::<u8>::new(0x64);

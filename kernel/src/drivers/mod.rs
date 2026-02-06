@@ -5,6 +5,7 @@ pub mod vga_buffer;
 pub mod keyboard;
 pub mod framebuffer;
 pub mod timer;
+pub mod serial;
 
 const VGA_BUFFER: *mut u16 = 0xB8000 as *mut u16;
 const VGA_WIDTH: usize = 80;

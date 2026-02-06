@@ -10,7 +10,7 @@ extern crate alloc;
 extern crate ospab_os;
 
 use core::panic::PanicInfo;
-use ospab_os::{boot, drivers, fb_println, gdt, interrupts, mm, process};
+use ospab_os::{boot, drivers, fb_println, gdt, interrupts, mm, process, ipc, services, shell, task, mem, syscall};
 
 // ============================================================================
 // SERIAL OUTPUT - For debugging
@@ -150,7 +150,7 @@ pub extern "C" fn _start() -> ! {
     
     serial_print(b"\r\n");
     serial_print(b"========================================\r\n");
-    serial_print(b"         ospabOS Kernel v0.1.0         \r\n");
+    serial_print(b"       ospabOS v0.1.0 \"Foundation\"     \r\n");
     serial_print(b"========================================\r\n");
     
     // Step 1: Verify bootloader
@@ -199,13 +199,18 @@ pub extern "C" fn _start() -> ! {
         serial_print(b"[5/7] Framebuffer FAILED\r\n");
     }
     
-    // Step 6: Initialize keyboard driver (no interrupts yet)
-    serial_print(b"[6/7] Initializing keyboard driver...\r\n");
-    drivers::keyboard::init();
-    serial_print(b"[6/7] Keyboard driver ready\r\n");
+    // Step 6: Initialize serial port for hardware debugging
+    serial_print(b"[6/8] Initializing serial port (COM1)...\r\n");
+    drivers::serial::init();
+    serial_print(b"[6/8] Serial port ready\r\n");
     
-    // Step 7: System ready
-    serial_print(b"[7/7] All components initialized\r\n");
+    // Step 7: Initialize keyboard driver (no interrupts yet)
+    serial_print(b"[7/8] Initializing keyboard driver...\r\n");
+    drivers::keyboard::init();
+    serial_print(b"[7/8] Keyboard driver ready\r\n");
+    
+    // Step 8: System ready
+    serial_print(b"[8/8] All components initialized\r\n");
     
     serial_print(b"\r\n");
     serial_print(b"========================================\r\n");
@@ -228,6 +233,51 @@ pub extern "C" fn _start() -> ! {
     serial_print(b"[SUBSYS] Initializing process management...\r\n");
     process::init();
     
+    // === v0.1.0 "FOUNDATION" INITIALIZATION ===
+    serial_print(b"\r\n[v0.1.0] Initializing Foundation components...\r\n");
+    
+    // Task management with TSS
+    serial_print(b"[v0.1.0] Initializing task management (TSS + scheduler)...\r\n");
+    task::init();
+    
+    // Frame allocator
+    serial_print(b"[v0.1.0] Initializing frame allocator...\r\n");
+    mem::physical::FRAME_ALLOCATOR.lock().init(0x100000, 0x200000); // Kernel at 1MB-2MB
+    
+    // Virtual Memory Manager (v0.1.5)
+    serial_print(b"[v0.1.5] Initializing Virtual Memory Manager...\r\n");
+    if let Err(e) = mem::init_vmm() {
+        serial_print(b"[ERROR] Failed to initialize VMM: ");
+        serial_print(e.as_bytes());
+        serial_print(b"\r\n");
+    } else {
+        serial_print(b"[v0.1.5] VMM initialized successfully\r\n");
+    }
+    
+    // Syscall interface (v0.1.5)
+    serial_print(b"[v0.1.5] Initializing syscall interface...\r\n");
+    syscall::init();
+    serial_print(b"[v0.1.5] Syscall interface ready\r\n");
+    
+    serial_print(b"[v0.1.0] Foundation components initialized\r\n");
+    
+    // === MICROKERNEL IPC ARCHITECTURE ===
+    serial_print(b"\r\n[IPC] Initializing microkernel services...\r\n");
+    
+    // Message Bus
+    serial_print(b"[IPC] Initializing message bus...\r\n");
+    ipc::bus::init();
+    
+    // Terminal Service (wraps existing I/O)
+    serial_print(b"[IPC] Initializing terminal service...\r\n");
+    services::terminal::init();
+    
+    // VFS Service
+    serial_print(b"[IPC] Initializing VFS service...\r\n");
+    services::vfs::init();
+    
+    serial_print(b"[IPC] All services online\r\n");
+    
     serial_print(b"[SUBSYS] All subsystems online\r\n");
     
     serial_print(b"\r\n[FB] Preparing screen output...\r\n");
@@ -235,14 +285,22 @@ pub extern "C" fn _start() -> ! {
     if fb_ok {
         serial_print(b"[FB] Drawing welcome screen...\r\n");
         fb_println!("========================================");
-        fb_println!("       ospabOS Kernel v0.1.0");
+        fb_println!("  ospabOS v0.1.0 \"Foundation\"");
+        fb_println!("  Preemptive Multitasking + Syscalls");
         fb_println!("========================================");
         fb_println!();
         fb_println!("[OK] GDT initialized");
         fb_println!("[OK] IDT initialized");
-        fb_println!("[OK] PIC configured");
-        fb_println!("[OK] Framebuffer ready");
+        fb_println!("[OK] Task Scheduler (Round-Robin)");
+        fb_println!("[OK] TSS configured");
+        fb_println!("[OK] Frame Allocator ready");
+        fb_println!("[OK] Memory Map parsed (USABLE regions)");
+        fb_println!("[OK] UEFI Framebuffer (RGB/BGR auto)");
+        fb_println!("[OK] Serial port (COM1) ready");
         fb_println!("[OK] Keyboard driver loaded");
+        fb_println!("[OK] IPC Message Bus ready");
+        fb_println!("[OK] Terminal Service online");
+        fb_println!("[OK] VFS Service (Initrd) online");
         fb_println!();
         serial_print(b"[FB] Welcome screen drawn\r\n");
     } else {
@@ -270,9 +328,13 @@ pub extern "C" fn _start() -> ! {
     if fb_ok {
         fb_println!("[OK] Interrupts enabled");
         fb_println!();
-        fb_println!("Ready. Type 'help' for commands.");
+        fb_println!("Message-passing microkernel architecture");
+        fb_println!("Type 'help' for commands. Try: ls, cat test.txt");
         fb_println!();
-        drivers::framebuffer::print("[ospab]~> ");
+        
+        // Show prompt with current directory
+        let prompt = shell::get_prompt();
+        drivers::framebuffer::print(&prompt);
         drivers::framebuffer::show_cursor();
         serial_print(b"[FB] Prompt drawn, cursor shown\r\n");
     } else {
@@ -283,26 +345,24 @@ pub extern "C" fn _start() -> ! {
     
     let mut tick_counter: u64 = 0;
     
-    // Main event loop (Linux-style with scheduler)
+    // Main event loop - microkernel message processing
     loop {
-        // Process keyboard events
-        drivers::keyboard::process_scancodes();
+        // Process keyboard events (Terminal Service)
+        services::terminal::poll_input();
         
         // Check timer ticks
         let current_jiffies = drivers::timer::get_jiffies();
         if current_jiffies != tick_counter {
             tick_counter = current_jiffies;
             
-            // Every second, print uptime
-            if tick_counter % 100 == 0 {
-                serial_print(b"[UPTIME] ");
-                serial_hex(drivers::timer::get_uptime_ms() / 1000);
-                serial_print(b" seconds\r\n");
+            // Blink cursor every 50 ticks (500ms)
+            if tick_counter % 50 == 0 {
+                drivers::framebuffer::toggle_cursor();
             }
         }
         
-        // Small pause to reduce CPU usage
-        core::hint::spin_loop();
+        // Halt CPU until next interrupt (saves power and allows interrupts to fire)
+        x86_64::instructions::hlt();
     }
 }
 

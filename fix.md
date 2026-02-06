@@ -5,11 +5,11 @@
 ---
 
 ## 🔍 Быстрая проверка (выполнить сразу)
-1. Убедиться, что ISO содержит `kernel.elf` в корне:
+1. Убедиться, что ISO содержит `kernel` в корне:
 
 ```bash
 xorriso -indev kernel/ospab-os-fixed.iso -ls /
-# ожидается: 'kernel.elf' и 'limine.conf' и 'limine-bios.sys' в корне
+# ожидается: 'kernel' и 'limine.conf' и 'limine-bios.sys' в корне
 ```
 
 2. Проверить `limine.conf` в корне (`iso_root/limine.conf`):
@@ -18,7 +18,7 @@ xorriso -indev kernel/ospab-os-fixed.iso -ls /
 
 ```text
 /ospabOS
-    path: kernel.elf
+    path: boot():/kernel
     protocol: limine
 ```
 
@@ -60,7 +60,7 @@ file /tmp/iso_extract/kernel.elf
 2. Убедиться, что строка с коротким тестовым сообщением присутствует в бинарнике (мы записываем `ospabOS: booted\n` в `_start`):
 
 ```bash
-strings /tmp/iso_extract/kernel.elf | grep -F 'ospabOS: booted' || true
+strings /tmp/iso_extract/kernel | grep -F 'ospabOS: booted' || true
 ```
 
 Если строка отсутствует — пересоберите ядро и повторите шаги выше.
@@ -99,15 +99,14 @@ unsafe {
 ## 🧪 Если Limine говорит "Failed to open executable"
 1. Проверьте вариации `path:` в `limine.conf`: попробуйте *по очереди*:
 
-- `path: kernel.elf`
-- `path: /kernel.elf`
-- `path: boot:///kernel.elf`
+- `path: boot():/kernel`
+- `path: /kernel`
 
-2. Положите `kernel.elf` не только в корень, но и в `/boot/`, `/limine/`, `/boot/limine/` внутри `iso_root/` (Limine ищет в нескольких местах):
+2. Положите `kernel` не только в корень, но и в `/boot/`, `/limine/`, `/boot/limine/` внутри `iso_root/` (Limine ищет в нескольких местах):
 
 ```bash
-cp kernel/iso_root/kernel.elf kernel/iso_root/boot/kernel.elf
-cp kernel/iso_root/kernel.elf kernel/iso_root/limine/kernel.elf
+cp kernel/iso_root/kernel kernel/iso_root/boot/kernel
+cp kernel/iso_root/kernel kernel/iso_root/limine/kernel
 ```
 
 3. Пересоберите ISO, снова запустите `limine bios-install` и загрузитесь.

@@ -25,3 +25,10 @@ Gemini's Directive (Plan for next sprint):
     The "Tomato" Link: Готов ли какой-то интерфейс для Userspace, или мы всё еще работаем в Ring 0 без разделения привилегий?
 
 Жду отчет о проблемах, чтобы я мог скорректировать инструкции и код.»
+
+---
+
+Status update (February 6, 2026):
+- initrd TAR parser and VFS integration added
+- coreutils stubs and /bin lookup in shell
+- syscalls extended with open/exec

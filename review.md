@@ -14,7 +14,7 @@ ospabOS — кастомное ядро операционной системы 
 - **Bootloader:** Limine v10.6.3 (BIOS mode)
 - **Target:** Кастомный `x86_64-ospab.json` с `linker.ld`
 - **Тестирование:** QEMU с serial output
-- **Сборка:** WSL bash script (`build_with_alloc.sh`)
+- **Сборка:** WSL bash script (`build.sh`)
 - **Архитектура:** Production-ready, no unsafe static mut
 
 ---
@@ -27,6 +27,17 @@ ospabOS — кастомное ядро операционной системы 
 **Решение:** Исправлен `limine.conf` на формат `key: value`
 
 ```
+
+---
+
+## Update (February 6, 2026)
+
+- Initrd TAR parser (ustar) added and wired into VFS
+- VFS now supports mkdir/write/delete for in-memory edits
+- Coreutils stubs (ls, cat, mkdir, cp, mv) added in-kernel
+- Shell can resolve /bin entries and run #! scripts
+- Syscall stubs extended with open/exec
+- Ctrl+C now clears input instead of echoing
 timeout: 3
 /ospabOS
     protocol: limine
@@ -109,7 +120,7 @@ kernel/
 │       └── limine.rs     # Limine protocol structures
 ├── x86_64-ospab.json     # Custom target spec
 ├── linker.ld             # Linker script
-├── build_with_alloc.sh   # Build script
+├── build.sh   # Build script
 ├── iso_root/
 │   ├── limine.conf
 │   └── limine-bios-cd.bin
@@ -125,7 +136,7 @@ kernel/
 
 ## 🔧 Система сборки
 
-### build_with_alloc.sh
+### build.sh
 - Автоинкремент номера версии ISO
 - ISO сохраняются в `kernel/isos/ospab-os-N.iso`
 - Serial логи: `kernel/isos/serial-N.log`
@@ -134,7 +145,7 @@ kernel/
 ```powershell
 # Сборка
 cd d:\ospab-projects\ospab.os\kernel
-wsl bash build_with_alloc.sh
+wsl bash build.sh
 
 # Запуск с serial output
 D:\Toolz\qemu\qemu-system-x86_64.exe -cdrom isos/ospab-os-N.iso -serial stdio -m 128M

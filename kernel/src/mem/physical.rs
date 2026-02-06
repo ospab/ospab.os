@@ -1,79 +1,143 @@
-#![allow(unused_unsafe)]
+//! Physical Frame Allocator for ospabOS v0.1.0
+//! Uses bitmap-based allocation with proper locking
+
+use spin::Mutex;
+use alloc::format;
 
 const PAGE_SIZE: usize = 4096;
-const TOTAL_MEMORY: usize = 4 * 1024 * 1024 * 1024; // 4GB
-const TOTAL_PAGES: usize = TOTAL_MEMORY / PAGE_SIZE;
-const BITMAP_SIZE: usize = TOTAL_PAGES / 8;
+const TOTAL_MEMORY: usize = 128 * 1024 * 1024; // 128 MB (realistic for now)
+const TOTAL_FRAMES: usize = TOTAL_MEMORY / PAGE_SIZE;
+const BITMAP_SIZE: usize = (TOTAL_FRAMES + 7) / 8; // Round up
 
-static mut BITMAP: [u8; BITMAP_SIZE] = [0; BITMAP_SIZE];
-static mut INITIALIZED: bool = false;
+/// Global frame allocator
+pub static FRAME_ALLOCATOR: Mutex<FrameAllocator> = Mutex::new(FrameAllocator::new());
 
+pub struct FrameAllocator {
+    bitmap: [u8; BITMAP_SIZE],
+    next_free: usize,
+    total_frames: usize,
+    used_frames: usize,
+}
+
+impl FrameAllocator {
+    pub const fn new() -> Self {
+        FrameAllocator {
+            bitmap: [0; BITMAP_SIZE],
+            next_free: 0,
+            total_frames: TOTAL_FRAMES,
+            used_frames: 0,
+        }
+    }
+    
+    /// Initialize allocator (mark kernel memory as used)
+    pub fn init(&mut self, kernel_start: usize, kernel_end: usize) {
+        // Mark first 1 MB as reserved (BIOS, VGA, etc.)
+        let reserved_frames = (1024 * 1024) / PAGE_SIZE;
+        for i in 0..reserved_frames {
+            self.mark_used(i);
+        }
+        
+        // Mark kernel memory as used
+        let kernel_start_frame = kernel_start / PAGE_SIZE;
+        let kernel_end_frame = (kernel_end + PAGE_SIZE - 1) / PAGE_SIZE;
+        
+        for i in kernel_start_frame..kernel_end_frame {
+            self.mark_used(i);
+        }
+        
+        crate::serial_println!("[MEM] Frame allocator initialized");
+        crate::serial_println!("      Total frames: {}", self.total_frames);
+        crate::serial_println!("      Used frames: {}", self.used_frames);
+        crate::serial_println!("      Free frames: {}", self.total_frames - self.used_frames);
+    }
+    
+    /// Allocate a physical frame
+    pub fn allocate(&mut self) -> Option<usize> {
+        // Start from last known free position
+        for i in self.next_free..self.total_frames {
+            let byte_idx = i / 8;
+            let bit_idx = i % 8;
+            
+            if (self.bitmap[byte_idx] & (1 << bit_idx)) == 0 {
+                // Found free frame
+                self.bitmap[byte_idx] |= 1 << bit_idx;
+                self.used_frames += 1;
+                self.next_free = i + 1;
+                return Some(i * PAGE_SIZE);
+            }
+        }
+        
+        // Wrap around and search from beginning
+        for i in 0..self.next_free {
+            let byte_idx = i / 8;
+            let bit_idx = i % 8;
+            
+            if (self.bitmap[byte_idx] & (1 << bit_idx)) == 0 {
+                self.bitmap[byte_idx] |= 1 << bit_idx;
+                self.used_frames += 1;
+                self.next_free = i + 1;
+                return Some(i * PAGE_SIZE);
+            }
+        }
+        
+        None // Out of memory
+    }
+    
+    /// Free a physical frame
+    pub fn free(&mut self, addr: usize) {
+        let frame = addr / PAGE_SIZE;
+        
+        if frame >= self.total_frames {
+            return;
+        }
+        
+        let byte_idx = frame / 8;
+        let bit_idx = frame % 8;
+        
+        if (self.bitmap[byte_idx] & (1 << bit_idx)) != 0 {
+            self.bitmap[byte_idx] &= !(1 << bit_idx);
+            self.used_frames -= 1;
+            
+            if frame < self.next_free {
+                self.next_free = frame;
+            }
+        }
+    }
+    
+    /// Mark frame as used
+    fn mark_used(&mut self, frame: usize) {
+        if frame >= self.total_frames {
+            return;
+        }
+        
+        let byte_idx = frame / 8;
+        let bit_idx = frame % 8;
+        
+        if (self.bitmap[byte_idx] & (1 << bit_idx)) == 0 {
+            self.bitmap[byte_idx] |= 1 << bit_idx;
+            self.used_frames += 1;
+        }
+    }
+    
+    /// Get memory statistics
+    pub fn stats(&self) -> (usize, usize, usize) {
+        (self.total_frames, self.used_frames, self.total_frames - self.used_frames)
+    }
+}
+
+/// Compatibility wrapper for old PhysicalAllocator API
 pub struct PhysicalAllocator;
 
 impl PhysicalAllocator {
-    #[allow(unused_unsafe)]
     pub fn init() {
-        unsafe {
-            if !INITIALIZED {
-                // Mark first 1MB as used (for kernel, etc.)
-                let reserved_pages = (1024 * 1024) / PAGE_SIZE;
-                for i in 0..reserved_pages {
-                    Self::mark_used(i);
-                }
-                INITIALIZED = true;
-            }
-        }
+        // Compatibility wrapper - actual init done via FRAME_ALLOCATOR.init()
     }
 
     pub fn allocate_page() -> Option<usize> {
-        unsafe {
-            for i in 0..BITMAP_SIZE {
-                let byte = BITMAP[i];
-                if byte != 0xFF {
-                    for bit in 0..8 {
-                        if (byte & (1 << bit)) == 0 {
-                            let page_index = i * 8 + bit;
-                            Self::mark_used(page_index);
-                            crate::println!("Allocated page at index: {}", page_index);
-                            return Some(page_index * PAGE_SIZE);
-                        }
-                    }
-                }
-            }
-            crate::println!("Failed to allocate page: no free pages available");
-            None
-        }
+        FRAME_ALLOCATOR.lock().allocate()
     }
 
     pub fn free_page(addr: usize) {
-        let page_index = addr / PAGE_SIZE;
-        unsafe {
-            Self::mark_free(page_index);
-            crate::println!("Freed page at index: {}", page_index);
-        }
-    }
-
-    fn mark_used(page_index: usize) {
-        unsafe {
-            let byte_index = page_index / 8;
-            let bit_index = page_index % 8;
-            BITMAP[byte_index] |= 1 << bit_index;
-        }
-    }
-
-    fn mark_free(page_index: usize) {
-        unsafe {
-            let byte_index = page_index / 8;
-            let bit_index = page_index % 8;
-            BITMAP[byte_index] &= !(1 << bit_index);
-        }
-    }
-
-    pub fn is_used(page_index: usize) -> bool {
-        unsafe {
-            let byte_index = page_index / 8;
-            let bit_index = page_index % 8;
-            (BITMAP[byte_index] & (1 << bit_index)) != 0
-        }
+        FRAME_ALLOCATOR.lock().free(addr);
     }
 }

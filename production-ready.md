@@ -262,6 +262,18 @@ Tested: ospab-os-11.iso - stable with timer+keyboard IRQs
 3. IST stack - 20KB, можно увеличить если понадобится
 4. Keyboard buffer - 128 scancodes, достаточно для normal typing
 
+---
+
+## Update (February 6, 2026)
+
+Additional work after the production-ready refactor:
+
+- TAR initrd parser (ustar) integrated into VFS
+- VFS now supports mkdir/write/delete in-memory
+- Shell supports /bin lookup, #! scripts, and Ctrl+C cancel
+- Coreutils stubs added (ls, cat, mkdir, cp, mv)
+- Syscall stubs extended with open/exec
+
 **QA/Тестеру:**
 1. Проверить keyboard input в QEMU
 2. Провести stress test timer interrupts (100 Hz)

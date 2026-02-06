@@ -1,0 +1,162 @@
+//! Virtual Filesystem Service - Initrd based on Limine Modules
+//!
+//! This VFS reads files provided as Limine modules (initrd).
+//! Files are loaded at boot time and accessible via their paths.
+
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use alloc::format;
+use core::ffi::CStr;
+use crate::ipc::message::{FSRequest, FSResponse};
+use crate::boot::limine;
+
+/// File entry from initrd
+#[derive(Clone)]
+pub struct FileEntry {
+    pub name: String,
+    pub address: usize,
+    pub size: usize,
+}
+
+/// VFS Service with initrd support
+pub struct VFSService {
+    current_dir: spin::Mutex<String>,
+    files: spin::Mutex<Vec<FileEntry>>,
+}
+
+impl VFSService {
+    /// Create new VFS service
+    pub const fn new() -> Self {
+        Self {
+            current_dir: spin::Mutex::new(String::new()),
+            files: spin::Mutex::new(Vec::new()),
+        }
+    }
+
+    /// Initialize VFS and load files from Limine modules
+    pub fn init(&self) {
+        let mut cwd = self.current_dir.lock();
+        *cwd = "/".to_string();
+        drop(cwd);
+        
+        // Load files from Limine modules
+        let mut files = self.files.lock();
+        
+        if let Some(modules) = limine::modules() {
+            for module in modules {
+                if module.path.is_null() {
+                    continue;
+                }
+                
+                // Extract filename from path
+                let path = unsafe {
+                    if let Ok(cstr) = CStr::from_ptr(module.path as *const i8).to_str() {
+                        cstr
+                    } else {
+                        continue;
+                    }
+                };
+                
+                // Get last component of path
+                let filename = if let Some(pos) = path.rfind('/') {
+                    &path[pos + 1..]
+                } else {
+                    path
+                };
+                
+                files.push(FileEntry {
+                    name: filename.to_string(),
+                    address: module.address as usize,
+                    size: module.size as usize,
+                });
+            }
+        }
+        
+        // Log loaded files via serial
+        #[cfg(feature = "serial_debug")]
+        {
+            use crate::drivers::serial;
+            serial::info(&format!("VFS: Loaded {} files from initrd", files.len()));
+            for file in files.iter() {
+                serial::debug(&format!("  - {} ({} bytes)", file.name, file.size));
+            }
+        }
+    }
+
+    /// Process filesystem request
+    pub fn process(&self, request: FSRequest) -> FSResponse {
+        match request {
+            FSRequest::ListDir { path: _ } => {
+                // List all files in root (we only support flat filesystem for now)
+                let files = self.files.lock();
+                let names: Vec<String> = files.iter().map(|f| f.name.clone()).collect();
+                FSResponse::DirListing(names)
+            }
+            FSRequest::ReadFile { path } => {
+                // Read file from initrd
+                let files = self.files.lock();
+                
+                // Strip leading / if present
+                let filename = if path.starts_with('/') {
+                    &path[1..]
+                } else {
+                    &path
+                };
+                
+                if let Some(file) = files.iter().find(|f| f.name == filename) {
+                    // Copy file data
+                    let data = unsafe {
+                        core::slice::from_raw_parts(file.address as *const u8, file.size).to_vec()
+                    };
+                    FSResponse::FileData(data)
+                } else {
+                    FSResponse::Error(format!("File not found: {}", filename))
+                }
+            }
+            FSRequest::WriteFile { path, data: _ } => {
+                // Initrd is read-only
+                FSResponse::Error(format!("Read-only filesystem: {}", path))
+            }
+            FSRequest::CreateDir { path } => {
+                FSResponse::Error(format!("Read-only filesystem: {}", path))
+            }
+            FSRequest::Delete { path } => {
+                FSResponse::Error(format!("Read-only filesystem: {}", path))
+            }
+            FSRequest::ChangeDir { path } => {
+                // Only support root directory for now
+                if path == "/" || path.is_empty() {
+                    let mut cwd = self.current_dir.lock();
+                    *cwd = "/".to_string();
+                    FSResponse::Success
+                } else {
+                    FSResponse::Error("Only root directory (/) is supported".to_string())
+                }
+            }
+            FSRequest::GetCwd => {
+                let cwd = self.current_dir.lock();
+                FSResponse::Cwd(cwd.clone())
+            }
+        }
+    }
+}
+
+/// Global VFS instance
+static VFS: spin::Mutex<Option<VFSService>> = spin::Mutex::new(None);
+
+/// Initialize VFS service
+pub fn init() {
+    let mut vfs = VFS.lock();
+    let service = VFSService::new();
+    service.init();
+    *vfs = Some(service);
+}
+
+/// Process VFS request
+pub fn process_request(request: FSRequest) -> FSResponse {
+    if let Some(ref vfs) = *VFS.lock() {
+        vfs.process(request)
+    } else {
+        FSResponse::Error("VFS not initialized".to_string())
+    }
+}

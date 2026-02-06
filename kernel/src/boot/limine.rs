@@ -330,3 +330,126 @@ unsafe impl Sync for EntryPointRequest {}
 // Note: We use _start as our entry point, which is the standard way.
 // The entry point request is optional and mainly used when you want
 // a different entry than what's specified in the ELF header.
+
+// ============================================================================
+// Module Request (for Initrd/Files)
+// ============================================================================
+
+#[repr(C)]
+pub struct LimineFile {
+    pub revision: u64,
+    pub address: *mut u8,
+    pub size: u64,
+    pub path: *const c_char,
+    pub cmdline: *const c_char,
+    pub media_type: u32,
+    pub unused: u32,
+    pub tftp_ip: u32,
+    pub tftp_port: u32,
+    pub partition_index: u32,
+    pub mbr_disk_id: u32,
+    pub gpt_disk_uuid: [u8; 16],
+    pub gpt_part_uuid: [u8; 16],
+    pub part_uuid: [u8; 16],
+}
+
+#[repr(C)]
+pub struct ModuleResponse {
+    pub revision: u64,
+    pub module_count: u64,
+    pub modules: *mut *mut LimineFile,
+}
+
+#[repr(C)]
+pub struct ModuleRequest {
+    pub id: [u64; 4],
+    pub revision: u64,
+    pub response: *mut ModuleResponse,
+}
+
+unsafe impl Sync for ModuleRequest {}
+
+#[used]
+#[link_section = ".limine_requests"]
+static mut MODULE_REQUEST: ModuleRequest = ModuleRequest {
+    id: [
+        LIMINE_COMMON_MAGIC[0],
+        LIMINE_COMMON_MAGIC[1],
+        0x3e7e279702be32af,
+        0xca1c4f3bd1280cee,
+    ],
+    revision: 0,
+    response: ptr::null_mut(),
+};
+
+pub struct ModuleIterator {
+    modules: *mut *mut LimineFile,
+    count: usize,
+    index: usize,
+}
+
+impl Iterator for ModuleIterator {
+    type Item = &'static LimineFile;
+    
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.count {
+            return None;
+        }
+        unsafe {
+            let module_ptr = *self.modules.add(self.index);
+            self.index += 1;
+            if module_ptr.is_null() {
+                None
+            } else {
+                Some(&*module_ptr)
+            }
+        }
+    }
+}
+
+pub fn modules() -> Option<ModuleIterator> {
+    unsafe {
+        if MODULE_REQUEST.response.is_null() {
+            return None;
+        }
+        let resp = &*MODULE_REQUEST.response;
+        if resp.module_count == 0 || resp.modules.is_null() {
+            return None;
+        }
+        Some(ModuleIterator {
+            modules: resp.modules,
+            count: resp.module_count as usize,
+            index: 0,
+        })
+    }
+}
+
+/// Get a specific module by index
+pub fn get_module(index: usize) -> Option<&'static LimineFile> {
+    unsafe {
+        if MODULE_REQUEST.response.is_null() {
+            return None;
+        }
+        let resp = &*MODULE_REQUEST.response;
+        if index >= resp.module_count as usize || resp.modules.is_null() {
+            return None;
+        }
+        let module_ptr = *resp.modules.add(index);
+        if module_ptr.is_null() {
+            None
+        } else {
+            Some(&*module_ptr)
+        }
+    }
+}
+
+/// Get module count
+pub fn module_count() -> usize {
+    unsafe {
+        if MODULE_REQUEST.response.is_null() {
+            return 0;
+        }
+        let resp = &*MODULE_REQUEST.response;
+        resp.module_count as usize
+    }
+}

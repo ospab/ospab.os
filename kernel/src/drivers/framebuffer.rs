@@ -15,6 +15,12 @@ pub struct FramebufferConsole {
     pitch: usize,
     bpp: usize,
     
+    // Pixel format info for RGB/BGR handling
+    red_shift: u8,
+    green_shift: u8,
+    blue_shift: u8,
+    is_bgr: bool,
+    
     // Console state
     cursor_x: usize,
     cursor_y: usize,
@@ -23,7 +29,7 @@ pub struct FramebufferConsole {
     cols: usize,
     rows: usize,
     
-    // Colors (32-bit BGRA)
+    // Colors (RGB format internally)
     fg_color: u32,
     bg_color: u32,
     
@@ -41,10 +47,14 @@ impl FramebufferConsole {
             height: 0,
             pitch: 0,
             bpp: 0,
+            red_shift: 0,
+            green_shift: 8,
+            blue_shift: 16,
+            is_bgr: false,
             cursor_x: 0,
             cursor_y: 0,
-            char_width: 12,   // 8x8 font scaled 1.5x
-            char_height: 12,
+            char_width: 8,    // 8 pixels wide
+            char_height: 16,  // 16 pixels tall (rectangular like real character)
             cols: 0,
             rows: 0,
             fg_color: 0x00FFFFFF, // White
@@ -60,6 +70,14 @@ impl FramebufferConsole {
             self.height = fb.height as usize;
             self.pitch = fb.pitch as usize;
             self.bpp = fb.bpp as usize / 8;
+            
+            // Detect pixel format (RGB vs BGR)
+            self.red_shift = fb.red_mask_shift;
+            self.green_shift = fb.green_mask_shift;
+            self.blue_shift = fb.blue_mask_shift;
+            
+            // Check if BGR format (blue at lower bits than red)
+            self.is_bgr = self.blue_shift < self.red_shift;
             
             self.cols = self.width / self.char_width;
             self.rows = self.height / self.char_height;
@@ -111,11 +129,24 @@ impl FramebufferConsole {
             return;
         }
         
+        // Convert RGB color to framebuffer format
+        let r = (color >> 16) & 0xFF;
+        let g = (color >> 8) & 0xFF;
+        let b = color & 0xFF;
+        
+        let pixel_color = if self.is_bgr {
+            // BGR format
+            (b << self.blue_shift) | (g << self.green_shift) | (r << self.red_shift)
+        } else {
+            // RGB format
+            (r << self.red_shift) | (g << self.green_shift) | (b << self.blue_shift)
+        };
+        
         let offset = y * self.pitch + x * self.bpp;
         let ptr = self.fb_addr.add(offset) as *mut u32;
         
         // Write as 32-bit value using write_volatile
-        core::ptr::write_volatile(ptr, color | 0xFF000000);
+        core::ptr::write_volatile(ptr, pixel_color | 0xFF000000);
     }
     
     fn draw_char(&self, x: usize, y: usize, c: char) {
@@ -240,7 +271,7 @@ impl FramebufferConsole {
         self.rows
     }
     
-    /// Draw cursor at current position
+    /// Draw cursor at current position (Linux-style block cursor)
     pub fn draw_cursor(&self, visible: bool) {
         if self.fb_addr.is_null() {
             return;
@@ -249,14 +280,34 @@ impl FramebufferConsole {
         let x = self.cursor_x * self.char_width;
         let y = self.cursor_y * self.char_height;
         
-        // Draw underscore cursor
-        let cursor_y_start = y + self.char_height - 2; // Bottom 2 pixels
+        // Draw full block cursor (inverted colors)
         let color = if visible { self.fg_color } else { self.bg_color };
         
-        for py in 0..2 {
+        for py in 0..self.char_height {
             for px in 0..self.char_width {
                 unsafe {
-                    self.put_pixel(x + px, cursor_y_start + py, color);
+                    self.put_pixel(x + px, y + py, color);
+                }
+            }
+        }
+    }
+    
+    /// Draw cursor at specific row/col position (for editors)
+    pub fn draw_cursor_at(&self, row: usize, col: usize, visible: bool) {
+        if self.fb_addr.is_null() {
+            return;
+        }
+        
+        let x = col * self.char_width;
+        let y = row * self.char_height;
+        
+        // Draw full block cursor (inverted colors)
+        let color = if visible { self.fg_color } else { self.bg_color };
+        
+        for py in 0..self.char_height {
+            for px in 0..self.char_width {
+                unsafe {
+                    self.put_pixel(x + px, y + py, color);
                 }
             }
         }
@@ -340,6 +391,55 @@ pub fn show_cursor() {
     if let Some(mut console) = CONSOLE.try_lock() {
         console.show_cursor();
     }
+}
+
+/// Hide cursor
+pub fn hide_cursor() {
+    if let Some(mut console) = CONSOLE.try_lock() {
+        console.hide_cursor();
+    }
+}
+
+/// Draw cursor at specific row/col position (for text editors)
+pub fn draw_cursor_at(row: usize, col: usize, visible: bool) {
+    if let Some(console) = CONSOLE.try_lock() {
+        console.draw_cursor_at(row, col, visible);
+    }
+}
+
+/// Set pixel at specific coordinates (for graphics/DOOM)
+pub fn set_pixel(x: usize, y: usize, color: u32) {
+    if let Some(console) = CONSOLE.try_lock() {
+        unsafe {
+            console.put_pixel(x, y, color);
+        }
+    }
+}
+
+/// Get framebuffer info (for DOOM)
+pub fn get_info() -> FramebufferInfo {
+    if let Some(console) = CONSOLE.try_lock() {
+        FramebufferInfo {
+            width: console.width,
+            height: console.height,
+            pitch: console.pitch,
+            bpp: console.bpp,
+        }
+    } else {
+        FramebufferInfo {
+            width: 0,
+            height: 0,
+            pitch: 0,
+            bpp: 0,
+        }
+    }
+}
+
+pub struct FramebufferInfo {
+    pub width: usize,
+    pub height: usize,
+    pub pitch: usize,
+    pub bpp: usize,
 }
 
 // Implement fmt::Write

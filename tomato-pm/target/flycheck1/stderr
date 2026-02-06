@@ -1,9 +1,117 @@
-error: failed to run `rustc` to learn about target-specific information
+    Blocking waiting for file lock on package cache
+   0.031729500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: false }/TargetInner { name_inferred: true, ..: lib_target("tomato_pm", ["lib"], "D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\lib.rs", Edition2021) }
+   0.031817300s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-f4c0b7aed68b96e3\lib-tomato_pm`
 
 Caused by:
-  process didn't exit successfully: `rustc - --crate-name ___ --print=file-names --target \\?\D:\ospab-projects\ospab.os\kernel\x86_64-ospab.json --crate-type bin --crate-type rlib --crate-type dylib --crate-type cdylib --crate-type staticlib --crate-type proc-macro --print=sysroot --print=split-debuginfo --print=crate-name --print=cfg -Wwarnings` (exit code: 1)
-  --- stderr
-  error: error loading target specification: target feature `soft-float` is incompatible with the ABI but gets enabled in target spec
-    |
-    = help: run `rustc --print target-list` for a list of built-in targets
+    Не удается найти указанный файл. (os error 2)
 
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.047107500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: true }/TargetInner { name_inferred: true, ..: lib_target("tomato_pm", ["lib"], "D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\lib.rs", Edition2021) }
+   0.047155500s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato_pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-7dbfe7bd0f36a608\test-lib-tomato_pm`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.048234800s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: false }/TargetInner { name: "tomato-pm", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\main.rs", Edition2021) }
+   0.048280200s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-53a57aac842f45b5\bin-tomato-pm`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.049045300s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint: fingerprint error for tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)/Check { test: true }/TargetInner { name: "tomato-pm", doc: true, ..: with_path("D:\\ospab-projects\\ospab.os\\tomato-pm\\src\\main.rs", Edition2021) }
+   0.049071700s  INFO prepare_target{force=false package_id=tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm) target="tomato-pm"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\ospab-projects\ospab.os\tomato-pm\target\x86_64-ospab\debug\.fingerprint\tomato-pm-a41a50fb74df7637\test-bin-tomato-pm`
+
+Caused by:
+    Не удается найти указанный файл. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+    Checking tomato-pm v0.1.0 (D:\ospab-projects\ospab.os\tomato-pm)
+error: could not compile `tomato-pm` (lib test) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `tomato-pm` (lib) due to 1 previous error
